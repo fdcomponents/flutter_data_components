@@ -1,0 +1,10 @@
+test/
+coverage/
+build/
+.dart_tool/
+.pub/
+.pub-cache/
+pubspec.lock
+doc/
+example/macos/RunnerTests/
+example/ios/RunnerTests/

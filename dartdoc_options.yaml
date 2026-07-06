@@ -1,0 +1,10 @@
+# FD Components publishes several focused convenience entrypoints (`fdc_app`,
+# `fdc_edit`, `fdc_export`, and `fdc_ext`) that intentionally re-export a
+# subset of the full `fdc` barrel.
+#
+# Keep the public import ergonomics intact and suppress the low-confidence
+# ambiguous re-export noise produced by this intentional barrel shape.
+dartdoc:
+  ambiguousReexportScorerMinConfidence: 0.0
+  ignore:
+    - ambiguous-reexport
