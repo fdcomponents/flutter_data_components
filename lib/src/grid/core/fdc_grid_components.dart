@@ -16,7 +16,7 @@ import 'fdc_grid_types.dart';
 class FdcGridRowIndicator {
   /// Creates a [FdcGridRowIndicator].
   const FdcGridRowIndicator({
-    this.visible = true,
+    this.visible = false,
     this.options = const FdcGridRowIndicatorOptions(),
   });
 
@@ -100,7 +100,7 @@ class FdcGridCellIndicator {
 class FdcGridHeaderFilters {
   /// Creates a [FdcGridHeaderFilters].
   const FdcGridHeaderFilters({
-    this.visible = true,
+    this.visible = false,
     this.initiallyVisible = true,
     this.options = const FdcGridFilterOptions(),
     this.style,

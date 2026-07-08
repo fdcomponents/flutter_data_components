@@ -22,6 +22,14 @@ class FdcGridHeaderMainMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final menuEntries = FdcGridHeaderMainMenuEntries(
+      callbacks,
+      translations: FdcApp.translationsOf(context),
+    );
+    if (!menuEntries.hasActions) {
+      return const SizedBox.shrink();
+    }
+
     final iconColor = callbacks.filterIconColorOf(context, active: false);
 
     return SizedBox(
@@ -33,10 +41,7 @@ class FdcGridHeaderMainMenuButton extends StatelessWidget {
         openOnSecondaryTap: false,
         consumeSecondaryTap: false,
         canOpen: callbacks.onOpenHeaderMenu,
-        entries: FdcGridHeaderMainMenuEntries(
-          callbacks,
-          translations: FdcApp.translationsOf(context),
-        ).build(),
+        entries: menuEntries.build(),
         child: Center(
           child: FdcGridHeaderHoverIcon(
             icon: Icons.menu,
@@ -120,10 +125,7 @@ class FdcGridHeaderMainMenuEntries {
       hasUnpinAllColumnsAction ||
       hasResetLayoutAction;
 
-  List<FdcMenuEntry> build({
-    bool includeEmptyState = true,
-    bool includeFilterVisibilityToggle = true,
-  }) {
+  List<FdcMenuEntry> build({bool includeFilterVisibilityToggle = true}) {
     final entries = <FdcMenuEntry>[];
 
     _addClearSorts(entries);
@@ -134,16 +136,6 @@ class FdcGridHeaderMainMenuEntries {
     _addClearFilters(entries);
     _addUnpinAllColumns(entries);
     _addResetLayout(entries);
-
-    if (!hasActions && includeEmptyState) {
-      entries.add(
-        FdcMenuAction(
-          text: translations.grid.noActionsAvailable,
-          icon: Icons.info_outline,
-          enabled: false,
-        ),
-      );
-    }
 
     return entries;
   }
@@ -447,7 +439,7 @@ class FdcGridHeaderColumnMenuEntries {
     final mainMenuEntries = FdcGridHeaderMainMenuEntries(
       callbacks,
       translations: translations,
-    ).build(includeEmptyState: false, includeFilterVisibilityToggle: false);
+    ).build(includeFilterVisibilityToggle: false);
 
     if (mainMenuEntries.isEmpty) {
       return;

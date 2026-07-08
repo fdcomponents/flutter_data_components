@@ -13,9 +13,9 @@ class FdcGridOptions {
   /// Creates a [FdcGridOptions].
   const FdcGridOptions({
     this.readOnly = false,
-    this.allowColumnSorting = true,
+    this.allowColumnSorting = false,
     this.allowColumnFiltering = true,
-    this.allowColumnReordering = true,
+    this.allowColumnReordering = false,
     this.allowColumnResize = true,
     this.autoEdit = true,
     this.confirmDelete = true,
@@ -40,7 +40,7 @@ class FdcGridOptions {
   static const double fallbackDefaultColumnWidth = 160;
 
   /// Default value for fallback row height.
-  static const double fallbackRowHeight = 42;
+  static const double fallbackRowHeight = 40;
 
   /// Default value for minimum default column width.
   static const double minimumDefaultColumnWidth = 32;
@@ -259,7 +259,7 @@ class FdcGridOptions {
 class FdcGridColumnPinning {
   /// Creates a [FdcGridColumnPinning].
   const FdcGridColumnPinning({
-    this.enabled = true,
+    this.enabled = false,
     this.startPinnedGroupLabel = '',
     this.unpinnedGroupLabel = '',
     this.endPinnedGroupLabel = '',

@@ -276,15 +276,20 @@ class FdcGridToolbarShell extends StatelessWidget {
       );
     }
 
+    final menuEntries = FdcGridHeaderMainMenuEntries(
+      callbacks,
+      translations: FdcApp.translationsOf(context),
+    );
+    if (!menuEntries.hasActions) {
+      return const SizedBox.shrink();
+    }
+
     final itemTheme = FdcGridItemTheme.of(context);
     final label = button.label;
     final key = button.id == null
         ? const ValueKey('fdc_grid_toolbar_main_menu_button')
         : ValueKey<String>('fdc_grid_toolbar_main_menu_button_${button.id}');
-    final entries = FdcGridHeaderMainMenuEntries(
-      callbacks,
-      translations: FdcApp.translationsOf(context),
-    ).build();
+    final entries = menuEntries.build();
     final child = label == null
         ? SizedBox(
             key: key,

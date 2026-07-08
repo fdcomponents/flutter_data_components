@@ -2,18 +2,27 @@
 // https://fdcomponents.com
 // SPDX-License-Identifier: BSD-3-Clause
 
-import 'package:flutter/material.dart' show Color, EdgeInsets, TextStyle;
+import 'package:flutter/material.dart'
+    show Alignment, Color, EdgeInsets, FontWeight, TextStyle;
 
 import '../../common/theme/fdc_grid_styles.dart';
 import '../../common/theme/fdc_grid_theme_data.dart';
 import '../../common/widgets/progress/fdc_progress_bar_style.dart';
 import '../../common/widgets/validation/fdc_error_indicator.dart';
+import '../../grid/widgets/fdc_grid_header_metrics.dart';
 
 /// Pure white grid theme. This intentionally preserves the historical FDC
 /// light grid defaults.
 const FdcGridThemeData fdcGridWhiteTheme = FdcGridThemeData(
   grid: FdcGridStyle.defaults,
-  header: FdcGridHeaderStyle.defaults,
+  header: FdcGridHeaderStyle(
+    backgroundColor: Color(0xFFFFFFFF),
+    textStyle: TextStyle(color: Color(0xFF111827), fontWeight: FontWeight.w600),
+    groupHeight: 30,
+    groupAlignment: Alignment.center,
+    groupPadding: EdgeInsets.symmetric(horizontal: 8),
+    verticalSeparatorInset: FdcGridHeaderMetrics.verticalSeparatorInset,
+  ),
   headerFilters: FdcGridHeaderFilterStyle.defaults,
   toolbar: FdcGridToolbarStyle(
     itemTextColor: Color(0xFF111827),

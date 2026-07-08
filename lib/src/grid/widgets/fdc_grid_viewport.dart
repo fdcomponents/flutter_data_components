@@ -649,8 +649,12 @@ class FdcGridSplitViewport extends StatelessWidget {
                   visible: model.options.showVerticalScrollbar,
                   controller: model.verticalScrollController,
                   notificationPredicate: (notification) {
-                    return notification.depth == 0 &&
-                        notification.metrics.axis == Axis.vertical;
+                    // The vertical ListView lives below the center horizontal
+                    // viewport, so its notifications are nested and can have
+                    // a depth greater than zero. Filter by axis here; the
+                    // scrollbar is already bound to the grid's vertical
+                    // controller.
+                    return notification.metrics.axis == Axis.vertical;
                   },
                   child: FdcGridBodyRow(
                     model: model,
