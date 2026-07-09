@@ -4,8 +4,9 @@
 
 // ignore_for_file: public_member_api_docs
 
-import 'dart:async' show scheduleMicrotask;
+import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/fdc_grid_theme.dart';
@@ -94,7 +95,7 @@ class _FdcMenuAnchorState extends State<FdcMenuAnchor> {
       if (!mounted) {
         return;
       }
-      _open(_controller, Offset.zero);
+      unawaited(_open(_controller, Offset.zero));
     });
   }
 
@@ -117,27 +118,23 @@ class _FdcMenuAnchorState extends State<FdcMenuAnchor> {
   }
 
   Widget _buildGestureAnchor(MenuController controller, Widget child) {
-    return GestureDetector(
+    final tapAnchor = GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTapDown: widget.openOnTap
-          ? (details) => _open(controller, _openPosition(details.localPosition))
-          : null,
-      onSecondaryTapDown: widget.openOnSecondaryTap
           ? (details) => _open(controller, _openPosition(details.localPosition))
           : null,
       onSecondaryTap: widget.consumeSecondaryTap ? () {} : null,
       child: child,
     );
+
+    return _withSecondaryPointerAnchor(controller, tapAnchor);
   }
 
   Widget _buildMaterialAnchor(MenuController controller, Widget child) {
     Offset? tapPosition;
 
-    return GestureDetector(
+    final materialAnchor = GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onSecondaryTapDown: widget.openOnSecondaryTap
-          ? (details) => _open(controller, _openPosition(details.localPosition))
-          : null,
       onSecondaryTap: widget.consumeSecondaryTap ? () {} : null,
       child: Material(
         type: MaterialType.transparency,
@@ -155,29 +152,55 @@ class _FdcMenuAnchorState extends State<FdcMenuAnchor> {
         ),
       ),
     );
+
+    return _withSecondaryPointerAnchor(controller, materialAnchor);
+  }
+
+  Widget _withSecondaryPointerAnchor(MenuController controller, Widget child) {
+    if (!widget.openOnSecondaryTap) {
+      return child;
+    }
+
+    // Use the raw pointer stream for context-menu activation. Grid cells can
+    // contain nested gesture recognizers and controls, so relying on the tap
+    // gesture arena for a secondary click is unnecessarily fragile on Web.
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (event) {
+        if ((event.buttons & kSecondaryMouseButton) == 0) {
+          return;
+        }
+        unawaited(_open(controller, _openPosition(event.localPosition)));
+      },
+      child: child,
+    );
   }
 
   Offset _openPosition(Offset pointerPosition) {
     return widget.openAtAnchor ? Offset.zero : pointerPosition;
   }
 
-  void _open(MenuController controller, Offset position) {
+  Future<void> _open(MenuController controller, Offset position) async {
     final entriesBuilder = widget.entriesBuilder;
     if (entriesBuilder != null) {
       final entries = entriesBuilder();
       if (entries.isEmpty) {
         return;
       }
+
+      // MenuAnchor must rebuild with the resolved menu children before the
+      // controller opens. Waiting for endOfFrame is robust on Web where a
+      // secondary click can also cause selection updates in the same frame.
       setState(() => _resolvedEntries = entries);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _openResolved(_controller, position);
-        }
-      });
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) {
+        return;
+      }
+      _openResolved(_controller, position);
       return;
     }
     _resolvedEntries = widget.entries;
-    _openResolved(_controller, position);
+    _openResolved(controller, position);
   }
 
   void _openResolved(MenuController controller, Offset position) {

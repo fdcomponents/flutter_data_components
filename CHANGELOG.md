@@ -1,3 +1,7 @@
+## 1.0.2
+
+- Fixed context menus so secondary mouse clicks reliably open menus in nested interactive widgets, including Flutter Web grids.
+
 ## 1.0.1
 
 - Made sorting, column reordering, header filters, column pinning, and the row indicator opt-in by default.

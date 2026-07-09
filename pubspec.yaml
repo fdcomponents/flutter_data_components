@@ -1,7 +1,8 @@
 name: flutter_data_components
 description: RAD data components for Flutter business applications, including datasets, typed fields, grid and editors.
-version: 1.0.1
+version: 1.0.2
 homepage: https://fdcomponents.com
+documentation: https://fdcomponents.com/docs/intro/
 repository: https://github.com/fdcomponents/flutter_data_components
 issue_tracker: https://github.com/fdcomponents/flutter_data_components/issues
 topics:
