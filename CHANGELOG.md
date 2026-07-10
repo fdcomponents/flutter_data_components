@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Expanded the `fdc_app.dart` entrypoint to export `FdcThemeData`, `FdcExportStyle`, and `FdcExportFormatStyle` for application-level theme and export configuration.
+
 ## 1.0.2
 
 - Fixed context menus so secondary mouse clicks reliably open menus in nested interactive widgets, including Flutter Web grids.

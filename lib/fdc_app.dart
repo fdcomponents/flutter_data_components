@@ -21,7 +21,9 @@ export 'src/common/format/fdc_format_settings.dart'
 export 'src/common/theme/fdc_editor_theme.dart'
     show FdcEditorTheme, FdcEditorThemes;
 export 'src/common/theme/fdc_grid_theme.dart' show FdcGridTheme, FdcGridThemes;
-export 'src/common/theme/fdc_theme.dart' show FdcTheme;
+export 'src/common/theme/fdc_theme.dart' show FdcTheme, FdcThemeData;
+export 'src/exports/fdc_export_style.dart'
+    show FdcExportFormatStyle, FdcExportStyle;
 export 'src/i18n/fdc_localizations.dart'
     show FdcLocalizations, FdcLocalizationsDelegate;
 export 'src/i18n/fdc_translations.dart'

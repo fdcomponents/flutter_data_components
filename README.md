@@ -7,6 +7,8 @@
 
 **High-performance RAD data components for Flutter business applications.**
 
+**[Website](https://fdcomponents.com) · [Documentation](https://fdcomponents.com/docs/intro/) · [API reference](https://pub.dev/documentation/flutter_data_components/latest/)**
+
 Build data-heavy Flutter applications faster with a cohesive toolkit for datasets, typed fields, validation, CRUD workflows, data-aware editors, and an editable enterprise grid.
 
 FDC is designed for the screens that dominate real business software: POS systems, orders, invoices, inventory, administration, back-office operations, ERP modules, and other structured data workflows.
@@ -341,13 +343,11 @@ The Pro edition extends the same dataset and grid architecture with advanced ada
 
 Community applications use the same core programming model, so the architecture remains consistent across the ecosystem and provides a clear upgrade path when the Pro edition becomes publicly available.
 
-## Documentation
-
-The complete user documentation is currently under development. This README and the included example application provide the current introduction and working reference while the full documentation site is being prepared.
-
 ## Links
 
 - Website: https://fdcomponents.com
+- Documentation: https://fdcomponents.com/docs/intro/
+- API reference: https://pub.dev/documentation/flutter_data_components/latest/
 - Source code: https://github.com/fdcomponents/flutter_data_components
 - Issues: https://github.com/fdcomponents/flutter_data_components/issues
 
