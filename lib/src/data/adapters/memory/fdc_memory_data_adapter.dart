@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 import 'dart:async';
-import 'dart:isolate';
 
 import '../../../common/fdc_aggregate.dart';
+import '../../../common/platform/fdc_background_runner.dart';
 import '../../fdc_change_set.dart';
 import '../../fdc_data_adapter.dart';
 import '../../fdc_data_errors.dart';
@@ -15,288 +15,7 @@ import '../../fdc_field_name.dart';
 import '../../fdc_record.dart';
 import '../../types/fdc_decimal.dart';
 
-const int _memoryWorkerReadyTag = 0;
-const int _memoryWorkerSuccessTag = 1;
-const int _memoryWorkerFailureTag = 2;
-const int _memoryWorkerAckTag = 3;
-
-const int _memoryErrorStateTag = 0;
-const int _memoryErrorArgumentTag = 1;
-const int _memoryErrorFormatTag = 2;
-const int _memoryErrorUnsupportedTag = 3;
-const int _memoryErrorAdapterTag = 4;
-const int _memoryErrorGenericTag = 5;
-
-List<Object?> _encodeMemoryWorkerError(Object error, StackTrace stackTrace) {
-  if (error is StateError) {
-    return <Object?>[
-      _memoryErrorStateTag,
-      error.message,
-      stackTrace.toString(),
-    ];
-  }
-  if (error is ArgumentError) {
-    return <Object?>[
-      _memoryErrorArgumentTag,
-      error.message?.toString() ?? error.toString(),
-      error.name,
-      stackTrace.toString(),
-    ];
-  }
-  if (error is FormatException) {
-    return <Object?>[
-      _memoryErrorFormatTag,
-      error.message,
-      error.source?.toString(),
-      error.offset,
-      stackTrace.toString(),
-    ];
-  }
-  if (error is UnsupportedError) {
-    return <Object?>[
-      _memoryErrorUnsupportedTag,
-      error.message,
-      stackTrace.toString(),
-    ];
-  }
-  if (error is FdcDataAdapterException) {
-    return <Object?>[
-      _memoryErrorAdapterTag,
-      error.message,
-      error.operation,
-      error.recordId,
-      error.fieldName,
-      error.code,
-      error.details?.toString(),
-      stackTrace.toString(),
-    ];
-  }
-  return <Object?>[
-    _memoryErrorGenericTag,
-    error.toString(),
-    stackTrace.toString(),
-  ];
-}
-
-Never _throwMemoryWorkerError(List<Object?> payload) {
-  final tag = payload[0]! as int;
-  switch (tag) {
-    case _memoryErrorStateTag:
-      throw StateError(payload[1]! as String);
-    case _memoryErrorArgumentTag:
-      throw ArgumentError(payload[1], payload[2] as String?);
-    case _memoryErrorFormatTag:
-      throw FormatException(
-        payload[1]! as String,
-        payload[2],
-        payload[3] as int?,
-      );
-    case _memoryErrorUnsupportedTag:
-      throw UnsupportedError(payload[1]! as String);
-    case _memoryErrorAdapterTag:
-      throw FdcDataAdapterException(
-        message: payload[1]! as String,
-        operation: payload[2] as String?,
-        recordId: payload[3] as int?,
-        fieldName: payload[4] as String?,
-        code: payload[5] as String?,
-        details: payload[6],
-      );
-    default:
-      throw FdcDataAdapterException(
-        message: payload[1]! as String,
-        operation: 'memoryQuery',
-        details: payload.length > 2 ? payload[2] : null,
-      );
-  }
-}
-
-void _memoryLoadWorker(SendPort replyPort) {
-  final commandPort = ReceivePort();
-  var queryCompleted = false;
-  replyPort.send(<Object?>[_memoryWorkerReadyTag, commandPort.sendPort]);
-  commandPort.listen((message) {
-    if (queryCompleted) {
-      final envelope = message as List<Object?>;
-      if (envelope[0] == _memoryWorkerAckTag) {
-        commandPort.close();
-      }
-      return;
-    }
-
-    queryCompleted = true;
-    try {
-      final payload = message as List<Object?>;
-      final result = _FdcMemoryQueryExecutor.load(
-        payload[0]! as List<_FdcMemoryRow>,
-        payload[1]! as int,
-        payload[2]! as FdcDataLoadRequest,
-      );
-      replyPort.send(<Object?>[_memoryWorkerSuccessTag, result]);
-    } on Object catch (error, stackTrace) {
-      replyPort.send(<Object?>[
-        _memoryWorkerFailureTag,
-        _encodeMemoryWorkerError(error, stackTrace),
-      ]);
-    }
-  });
-}
-
-void _memoryAggregateWorker(SendPort replyPort) {
-  final commandPort = ReceivePort();
-  var queryCompleted = false;
-  replyPort.send(<Object?>[_memoryWorkerReadyTag, commandPort.sendPort]);
-  commandPort.listen((message) {
-    if (queryCompleted) {
-      final envelope = message as List<Object?>;
-      if (envelope[0] == _memoryWorkerAckTag) {
-        commandPort.close();
-      }
-      return;
-    }
-
-    queryCompleted = true;
-    try {
-      final payload = message as List<Object?>;
-      final result = _FdcMemoryQueryExecutor.aggregate(
-        payload[0]! as List<_FdcMemoryRow>,
-        payload[1]! as FdcDataAggregateRequest,
-      );
-      replyPort.send(<Object?>[_memoryWorkerSuccessTag, result]);
-    } on Object catch (error, stackTrace) {
-      replyPort.send(<Object?>[
-        _memoryWorkerFailureTag,
-        _encodeMemoryWorkerError(error, stackTrace),
-      ]);
-    }
-  });
-}
-
-T _unwrapMemoryWorkerResult<T>(List<Object?> envelope) {
-  final tag = envelope[0]! as int;
-  if (tag == _memoryWorkerSuccessTag) {
-    return envelope[1]! as T;
-  }
-  if (tag == _memoryWorkerFailureTag) {
-    _throwMemoryWorkerError(envelope[1]! as List<Object?>);
-  }
-  throw StateError('Unexpected memory query worker message tag: $tag.');
-}
-
-T _runMemoryInline<T>(T Function() body) {
-  try {
-    return body();
-  } on Object catch (error, stackTrace) {
-    _throwMemoryWorkerError(_encodeMemoryWorkerError(error, stackTrace));
-  }
-}
-
-Future<T> _runMemoryWorker<T>({
-  required void Function(SendPort) entryPoint,
-  required List<Object?> payload,
-  required T Function() inlineFallback,
-}) async {
-  final responsePort = ReceivePort();
-  final exitPort = ReceivePort();
-  final errorPort = ReceivePort();
-  final completer = Completer<T>();
-  Isolate? isolate;
-  SendPort? commandPort;
-
-  void completeError(Object error, [StackTrace? stackTrace]) {
-    if (!completer.isCompleted) {
-      completer.completeError(error, stackTrace ?? StackTrace.current);
-    }
-  }
-
-  late final StreamSubscription<Object?> responseSubscription;
-  late final StreamSubscription<Object?> exitSubscription;
-  late final StreamSubscription<Object?> errorSubscription;
-
-  responseSubscription = responsePort.listen((message) {
-    final envelope = message as List<Object?>;
-    final tag = envelope[0]! as int;
-    if (tag == _memoryWorkerReadyTag) {
-      commandPort = envelope[1]! as SendPort;
-      try {
-        commandPort!.send(payload);
-      } on Object catch (_) {
-        isolate?.kill(priority: Isolate.immediate);
-        isolate = null;
-        if (!completer.isCompleted) {
-          try {
-            completer.complete(_runMemoryInline(inlineFallback));
-          } on Object catch (error, stackTrace) {
-            completeError(error, stackTrace);
-          }
-        }
-      }
-      return;
-    }
-
-    if (!completer.isCompleted) {
-      commandPort?.send(const <Object?>[_memoryWorkerAckTag]);
-      try {
-        completer.complete(_unwrapMemoryWorkerResult<T>(envelope));
-      } on Object catch (error, stackTrace) {
-        completeError(error, stackTrace);
-      }
-    }
-  });
-
-  exitSubscription = exitPort.listen((_) {
-    if (!completer.isCompleted) {
-      completeError(
-        StateError('Memory query worker exited before returning a result.'),
-      );
-    }
-  });
-
-  errorSubscription = errorPort.listen((message) {
-    if (completer.isCompleted) {
-      return;
-    }
-    if (message is List<Object?> && message.length >= 2) {
-      completeError(
-        FdcDataAdapterException(
-          message: message[0].toString(),
-          operation: 'memoryQuery',
-          details: message[1].toString(),
-        ),
-      );
-      return;
-    }
-    completeError(
-      FdcDataAdapterException(
-        message: message.toString(),
-        operation: 'memoryQuery',
-      ),
-    );
-  });
-
-  try {
-    try {
-      isolate = await Isolate.spawn<SendPort>(
-        entryPoint,
-        responsePort.sendPort,
-        onExit: exitPort.sendPort,
-        onError: errorPort.sendPort,
-      );
-    } on Object catch (_) {
-      return _runMemoryInline(inlineFallback);
-    }
-
-    return await completer.future;
-  } finally {
-    isolate?.kill(priority: Isolate.immediate);
-    await responseSubscription.cancel();
-    await exitSubscription.cancel();
-    await errorSubscription.cancel();
-    responsePort.close();
-    exitPort.close();
-    errorPort.close();
-  }
-}
+T _runMemoryInline<T>(T Function() body) => body();
 
 /// In-memory adapter for local rows, tests, demos, and small client-side data.
 ///
@@ -350,12 +69,15 @@ class FdcMemoryDataAdapter extends FdcDataAdapter
         () => _FdcMemoryQueryExecutor.load(rows, nextRowIdentity, request),
       );
     }
-    return _runMemoryWorker<FdcDataLoadResult>(
-      entryPoint: _memoryLoadWorker,
-      payload: <Object?>[rows, nextRowIdentity, request],
-      inlineFallback: () =>
-          _FdcMemoryQueryExecutor.load(rows, nextRowIdentity, request),
-    );
+    try {
+      return await fdcRunInBackground<FdcDataLoadResult>(
+        () => _FdcMemoryQueryExecutor.load(rows, nextRowIdentity, request),
+      );
+    } on Object catch (_) {
+      return _runMemoryInline(
+        () => _FdcMemoryQueryExecutor.load(rows, nextRowIdentity, request),
+      );
+    }
   }
 
   @override
@@ -372,11 +94,15 @@ class FdcMemoryDataAdapter extends FdcDataAdapter
         () => _FdcMemoryQueryExecutor.aggregate(rows, request),
       );
     }
-    return _runMemoryWorker<FdcDataAggregateResult>(
-      entryPoint: _memoryAggregateWorker,
-      payload: <Object?>[rows, request],
-      inlineFallback: () => _FdcMemoryQueryExecutor.aggregate(rows, request),
-    );
+    try {
+      return await fdcRunInBackground<FdcDataAggregateResult>(
+        () => _FdcMemoryQueryExecutor.aggregate(rows, request),
+      );
+    } on Object catch (_) {
+      return _runMemoryInline(
+        () => _FdcMemoryQueryExecutor.aggregate(rows, request),
+      );
+    }
   }
 
   /// Calculates aggregates synchronously against the in-memory rows.

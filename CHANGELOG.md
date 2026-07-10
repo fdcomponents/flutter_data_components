@@ -1,3 +1,7 @@
+## 1.0.4
+
+- Restored Flutter Web compatibility by routing background dataset sorting, memory-adapter loading, and aggregate work through platform-specific runners: native platforms continue to use isolates while Web uses an inline fallback.
+
 ## 1.0.3
 
 - Expanded the `fdc_app.dart` entrypoint to export `FdcThemeData`, `FdcExportStyle`, and `FdcExportFormatStyle` for application-level theme and export configuration.

@@ -5,10 +5,11 @@
 // ignore_for_file: public_member_api_docs
 
 import 'dart:collection';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart' show SchedulerBinding;
+
+import '../common/platform/fdc_background_runner.dart';
 
 import 'fdc_data_type.dart';
 import 'fdc_dataset_filter.dart';
@@ -926,7 +927,7 @@ class FdcDataSetViewController {
       'ascending': <bool>[for (final sort in compiledSorts) sort.ascending],
     };
     try {
-      final sortedIndexes = await Isolate.run<List<int>>(
+      final sortedIndexes = await fdcRunInBackground<List<int>>(
         () => _fdcSortIndexesInIsolate(payload),
       );
       targetIndexes
