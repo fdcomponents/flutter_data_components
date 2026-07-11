@@ -31,6 +31,13 @@ jobs:
             os: windows-latest
 
     steps:
+      - name: Configure Git line endings
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
       - name: Checkout
         uses: actions/checkout@v4
 
