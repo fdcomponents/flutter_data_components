@@ -8,3 +8,4 @@ pubspec.lock
 doc/
 example/macos/RunnerTests/
 example/ios/RunnerTests/
+.github/

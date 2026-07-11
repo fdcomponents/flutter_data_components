@@ -3,6 +3,8 @@
 [![pub package](https://img.shields.io/pub/v/flutter_data_components.svg)](https://pub.dev/packages/flutter_data_components)
 [![pub points](https://img.shields.io/pub/points/flutter_data_components)](https://pub.dev/packages/flutter_data_components/score)
 [![likes](https://img.shields.io/pub/likes/flutter_data_components)](https://pub.dev/packages/flutter_data_components/score)
+[![CI](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci.yml)
+[![CI macOS](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci-macos.yml)
 [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 **High-performance RAD data components for Flutter business applications.**
