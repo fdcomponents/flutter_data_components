@@ -3,10 +3,17 @@ import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
 import 'package:flutter_data_components/src/data/fdc_dataset_view_controller.dart';
 import 'package:flutter_data_components/src/data/fdc_record.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  _viewControllerPrunesRetainedIdsThatNoLongerExist();
-  await _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh();
+void main() {
+  test(
+    'view controller prunes retained ids that no longer exist',
+    _viewControllerPrunesRetainedIdsThatNoLongerExist,
+  );
+  test(
+    'deleted retained inserted record does not survive sort refresh',
+    _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh,
+  );
 }
 
 void _viewControllerPrunesRetainedIdsThatNoLongerExist() {
@@ -24,18 +31,18 @@ void _viewControllerPrunesRetainedIdsThatNoLongerExist() {
     second,
   ]);
 
-  assert(removedFirstPass == 1);
-  assert(view.retainedVisibleRecordIds.contains(first.id));
-  assert(view.retainedVisibleRecordIds.contains(second.id));
-  assert(!view.retainedVisibleRecordIds.contains(999));
+  expect(removedFirstPass, 1);
+  expect(view.retainedVisibleRecordIds, contains(first.id));
+  expect(view.retainedVisibleRecordIds, contains(second.id));
+  expect(view.retainedVisibleRecordIds.contains(999), isFalse);
 
   final removedSecondPass = view.pruneRetainedVisibleRecords(<FdcRecord>[
     first,
   ]);
 
-  assert(removedSecondPass == 1);
-  assert(view.retainedVisibleRecordIds.contains(first.id));
-  assert(!view.retainedVisibleRecordIds.contains(second.id));
+  expect(removedSecondPass, 1);
+  expect(view.retainedVisibleRecordIds, contains(first.id));
+  expect(view.retainedVisibleRecordIds.contains(second.id), isFalse);
 }
 
 Future<void> _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh() async {
@@ -68,14 +75,14 @@ Future<void> _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh() async {
   dataSet.setFieldValue('status', 'draft');
   dataSet.post();
 
-  assert(dataSet.recordCount == 3);
-  assert(dataSet.fieldValue('name') == 'Draft');
+  expect(dataSet.recordCount, 3);
+  expect(dataSet.fieldValue('name'), 'Draft');
 
   // The inserted cached-update record is retained under the active filter. A
   // delete of an un-applied inserted record physically removes it from storage.
   dataSet.delete();
 
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   // A later sort rebuild must not accidentally keep any stale retained id for
   // the physically removed inserted record.
@@ -83,7 +90,7 @@ Future<void> _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh() async {
     FdcDataSetSort(fieldName: 'name'),
   ]);
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Charlie');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Bravo');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Charlie');
 }

@@ -1,11 +1,21 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testHasUpdatesIgnoresNonPersistentModifiedFields();
-  await _testHasUpdatesSeesPersistentModifiedFields();
-  await _testCloseClearsRecordsAndViewState();
+void main() {
+  test(
+    'has updates ignores non persistent modified fields',
+    _testHasUpdatesIgnoresNonPersistentModifiedFields,
+  );
+  test(
+    'has updates sees persistent modified fields',
+    _testHasUpdatesSeesPersistentModifiedFields,
+  );
+  test(
+    'close clears records and view state',
+    _testCloseClearsRecordsAndViewState,
+  );
 }
 
 Future<void> _testHasUpdatesIgnoresNonPersistentModifiedFields() async {
@@ -24,14 +34,14 @@ Future<void> _testHasUpdatesIgnoresNonPersistentModifiedFields() async {
 
   await dataSet.open();
 
-  assert(!dataSet.hasUpdates);
+  expect(dataSet.hasUpdates, isFalse);
   dataSet.edit();
   dataSet.setFieldValue('uiOnly', 'new');
   dataSet.post();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.changeSet.isEmpty);
-  assert(!dataSet.hasUpdates);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.changeSet, isEmpty);
+  expect(dataSet.hasUpdates, isFalse);
 }
 
 Future<void> _testHasUpdatesSeesPersistentModifiedFields() async {
@@ -54,9 +64,9 @@ Future<void> _testHasUpdatesSeesPersistentModifiedFields() async {
   dataSet.setFieldValue('name', 'Beta');
   dataSet.post();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(!dataSet.changeSet.isEmpty);
-  assert(dataSet.hasUpdates);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.changeSet.isEmpty, isFalse);
+  expect(dataSet.hasUpdates, isTrue);
 }
 
 Future<void> _testCloseClearsRecordsAndViewState() async {
@@ -85,10 +95,10 @@ Future<void> _testCloseClearsRecordsAndViewState() async {
   dataSet.setFieldValue('status', 'inactive');
   dataSet.post();
 
-  assert(dataSet.recordCount == 1);
+  expect(dataSet.recordCount, 1);
   dataSet.close();
 
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == -1);
+  expect(dataSet.state, FdcDataSetState.closed);
+  expect(dataSet.recordCount, 0);
+  expect(FdcDataSetInternal.activeIndex(dataSet), -1);
 }

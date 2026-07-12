@@ -1,10 +1,17 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testPostKeepsEditedRecordVisibleUntilFilterIsReapplied();
-  await _testUpdateFieldKeepsEditedRecordVisibleUntilFilterIsReapplied();
+void main() {
+  test(
+    'post keeps edited record visible until filter is reapplied',
+    _testPostKeepsEditedRecordVisibleUntilFilterIsReapplied,
+  );
+  test(
+    'update field keeps edited record visible until filter is reapplied',
+    _testUpdateFieldKeepsEditedRecordVisibleUntilFilterIsReapplied,
+  );
 }
 
 Future<void> _testPostKeepsEditedRecordVisibleUntilFilterIsReapplied() async {
@@ -32,18 +39,18 @@ Future<void> _testPostKeepsEditedRecordVisibleUntilFilterIsReapplied() async {
     ),
   ]);
 
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.edit();
   dataSet.setFieldValue('status', 'inactive');
   dataSet.post();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-  assert(dataSet.fieldValue('name') == 'Alpha');
-  assert(dataSet.fieldValue('status') == 'inactive');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.activeIndex(dataSet), 0);
+  expect(dataSet.fieldValue('name'), 'Alpha');
+  expect(dataSet.fieldValue('status'), 'inactive');
 
   await dataSet.filter.set(const <FdcDataSetFilter>[
     FdcDataSetFilter(
@@ -53,7 +60,7 @@ Future<void> _testPostKeepsEditedRecordVisibleUntilFilterIsReapplied() async {
     ),
   ]);
 
-  assert(dataSet.recordCount == 0);
+  expect(dataSet.recordCount, 0);
 }
 
 Future<void>
@@ -82,14 +89,14 @@ _testUpdateFieldKeepsEditedRecordVisibleUntilFilterIsReapplied() async {
     ),
   ]);
 
-  assert(dataSet.recordCount == 1);
+  expect(dataSet.recordCount, 1);
   dataSet.edit();
   dataSet.setFieldValue('status', 'inactive');
   dataSet.post();
 
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
-  assert(dataSet.fieldValue('status') == 'inactive');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
+  expect(dataSet.fieldValue('status'), 'inactive');
 
   FdcDataSetInternal.setViewState(
     dataSet,
@@ -102,5 +109,5 @@ _testUpdateFieldKeepsEditedRecordVisibleUntilFilterIsReapplied() async {
     ],
   );
 
-  assert(dataSet.recordCount == 0);
+  expect(dataSet.recordCount, 0);
 }

@@ -1,58 +1,61 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  final eventLog = <String>[];
+void main() {
+  test('fdc dataset insert append core', () async {
+    final eventLog = <String>[];
 
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcIntegerField(name: 'id'),
-      FdcStringField(size: 255, name: 'name'),
-    ],
-    beforeInsert: (dataSet) => eventLog.add('beforeInsert'),
-    onNewRecord: (dataSet) => eventLog.add('onNewRecord'),
-    afterInsert: (dataSet) => eventLog.add('afterInsert'),
-
-    adapter: FdcMemoryDataAdapter(
-      rows: <Map<String, Object?>>[
-        <String, Object?>{'id': 1, 'name': 'Alpha'},
-        <String, Object?>{'id': 2, 'name': 'Bravo'},
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[
+        FdcIntegerField(name: 'id'),
+        FdcStringField(size: 255, name: 'name'),
       ],
-    ),
-  );
+      beforeInsert: (dataSet) => eventLog.add('beforeInsert'),
+      onNewRecord: (dataSet) => eventLog.add('onNewRecord'),
+      afterInsert: (dataSet) => eventLog.add('afterInsert'),
 
-  await dataSet.open();
+      adapter: FdcMemoryDataAdapter(
+        rows: <Map<String, Object?>>[
+          <String, Object?>{'id': 1, 'name': 'Alpha'},
+          <String, Object?>{'id': 2, 'name': 'Bravo'},
+        ],
+      ),
+    );
 
-  dataSet.append();
-  assert(dataSet.state == FdcDataSetState.insert);
-  dataSet.setFieldValue('id', 3);
-  dataSet.setFieldValue('name', 'Charlie');
-  dataSet.post();
+    await dataSet.open();
 
-  assert(dataSet.recordCount == 3);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name') == 'Charlie');
+    dataSet.append();
+    expect(dataSet.state, FdcDataSetState.insert);
+    dataSet.setFieldValue('id', 3);
+    dataSet.setFieldValue('name', 'Charlie');
+    dataSet.post();
 
-  dataSet.moveToRecord(2);
-  dataSet.insert();
-  assert(dataSet.state == FdcDataSetState.insert);
-  dataSet.setFieldValue('id', 4);
-  dataSet.setFieldValue('name', 'Inserted');
-  dataSet.post();
+    expect(dataSet.recordCount, 3);
+    expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name'), 'Charlie');
 
-  assert(dataSet.recordCount == 4);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Inserted');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'name') == 'Charlie');
+    dataSet.moveToRecord(2);
+    dataSet.insert();
+    expect(dataSet.state, FdcDataSetState.insert);
+    dataSet.setFieldValue('id', 4);
+    dataSet.setFieldValue('name', 'Inserted');
+    dataSet.post();
 
-  assert(
-    eventLog.join(',') ==
-        'beforeInsert,onNewRecord,afterInsert,'
-            'beforeInsert,onNewRecord,afterInsert',
-  );
+    expect(dataSet.recordCount, 4);
+    expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
+    expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Inserted');
+    expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name'), 'Bravo');
+    expect(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'name'), 'Charlie');
 
-  await duplicateInsertAppendNoopSmokeTest();
+    expect(
+      eventLog.join(','),
+      'beforeInsert,onNewRecord,afterInsert,'
+      'beforeInsert,onNewRecord,afterInsert',
+    );
+
+    await duplicateInsertAppendNoopSmokeTest();
+  });
 }
 
 Future<void> duplicateInsertAppendNoopSmokeTest() async {
@@ -83,13 +86,13 @@ Future<void> duplicateInsertAppendNoopSmokeTest() async {
   dataSet.append();
   dataSet.insert();
 
-  assert(dataSet.state == FdcDataSetState.insert);
-  assert(dataSet.recordCount == 2);
-  assert(dataSet.fieldByName('id').value == 2);
-  assert(dataSet.fieldByName('name').value == 'Bravo');
-  assert(eventLog.join(',') == 'beforeInsert,onNewRecord,afterInsert');
+  expect(dataSet.state, FdcDataSetState.insert);
+  expect(dataSet.recordCount, 2);
+  expect(dataSet.fieldByName('id').value, 2);
+  expect(dataSet.fieldByName('name').value, 'Bravo');
+  expect(eventLog.join(','), 'beforeInsert,onNewRecord,afterInsert');
 
   dataSet.post();
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Bravo');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Bravo');
 }

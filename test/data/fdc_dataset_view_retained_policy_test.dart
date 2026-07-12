@@ -1,13 +1,26 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _clearSortsKeepsRetainedInsertedRows();
-  await _clearFiltersClearsRetainedRows();
-  await _adapterOpenKeepsActiveFilterButClearsRetainedRows();
-  await _closeThenOpenDoesNotLeakRetainedRows();
-  await _deleteRetainedInsertedRecordLeavesNoStaleViewIndex();
+void main() {
+  test(
+    'clear sorts keeps retained inserted rows',
+    _clearSortsKeepsRetainedInsertedRows,
+  );
+  test('clear filters clears retained rows', _clearFiltersClearsRetainedRows);
+  test(
+    'adapter open keeps active filter but clears retained rows',
+    _adapterOpenKeepsActiveFilterButClearsRetainedRows,
+  );
+  test(
+    'close then open does not leak retained rows',
+    _closeThenOpenDoesNotLeakRetainedRows,
+  );
+  test(
+    'delete retained inserted record leaves no stale view index',
+    _deleteRetainedInsertedRecordLeavesNoStaleViewIndex,
+  );
 }
 
 FdcDataSet _createDataSet({List<Map<String, Object?>>? rows}) {
@@ -56,13 +69,13 @@ Future<void> _clearSortsKeepsRetainedInsertedRows() async {
   await dataSet.sort.set(const <FdcDataSetSort>[
     FdcDataSetSort(fieldName: 'name'),
   ]);
-  assert(dataSet.recordCount == 3);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Aardvark');
+  expect(dataSet.recordCount, 3);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Aardvark');
 
   await dataSet.sort.clear();
 
-  assert(dataSet.recordCount == 3);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name') == 'Aardvark');
+  expect(dataSet.recordCount, 3);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name'), 'Aardvark');
 }
 
 Future<void> _clearFiltersClearsRetainedRows() async {
@@ -71,10 +84,10 @@ Future<void> _clearFiltersClearsRetainedRows() async {
   await dataSet.filter.set(_activeFilter);
   _appendDraftRow(dataSet, 'Draft');
 
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   await dataSet.filter.clear();
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   // Re-apply the same filter without explicitly clearing retained rows. If
   // clearFilters did not clear retained state, this would keep Draft visible.
@@ -84,9 +97,9 @@ Future<void> _clearFiltersClearsRetainedRows() async {
     clearRetainedVisibleRecords: false,
   );
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Charlie');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Bravo');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Charlie');
 }
 
 Future<void> _adapterOpenKeepsActiveFilterButClearsRetainedRows() async {
@@ -95,7 +108,7 @@ Future<void> _adapterOpenKeepsActiveFilterButClearsRetainedRows() async {
   await dataSet.filter.set(_activeFilter);
   _appendDraftRow(dataSet, 'OldDraft');
 
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   _replaceAdapterRows(dataSet, const <Map<String, Object?>>[
     {'name': 'NewDraft', 'status': 'draft'},
@@ -103,8 +116,8 @@ Future<void> _adapterOpenKeepsActiveFilterButClearsRetainedRows() async {
   ]);
   await dataSet.open();
 
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'NewActive');
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'NewActive');
 
   // A sort-only view refresh must not resurrect any retained row from before
   // adapter open replaced storage.
@@ -112,8 +125,8 @@ Future<void> _adapterOpenKeepsActiveFilterButClearsRetainedRows() async {
     FdcDataSetSort(fieldName: 'name'),
   ]);
 
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'NewActive');
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'NewActive');
 }
 
 Future<void> _closeThenOpenDoesNotLeakRetainedRows() async {
@@ -122,10 +135,10 @@ Future<void> _closeThenOpenDoesNotLeakRetainedRows() async {
   await dataSet.filter.set(_activeFilter);
   _appendDraftRow(dataSet, 'OldDraft');
 
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   dataSet.close();
-  assert(dataSet.filter.active == false);
+  expect(dataSet.filter.active, false);
 
   _replaceAdapterRows(dataSet, const <Map<String, Object?>>[
     {'name': 'ReloadDraft', 'status': 'draft'},
@@ -133,9 +146,9 @@ Future<void> _closeThenOpenDoesNotLeakRetainedRows() async {
   ]);
   await dataSet.open();
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'ReloadDraft');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'ReloadActive');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'ReloadDraft');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'ReloadActive');
 }
 
 Future<void> _deleteRetainedInsertedRecordLeavesNoStaleViewIndex() async {
@@ -144,12 +157,12 @@ Future<void> _deleteRetainedInsertedRecordLeavesNoStaleViewIndex() async {
   await dataSet.filter.set(_activeFilter);
   _appendDraftRow(dataSet, 'Draft');
 
-  assert(dataSet.recordCount == 3);
-  assert(dataSet.fieldValue('name') == 'Draft');
+  expect(dataSet.recordCount, 3);
+  expect(dataSet.fieldValue('name'), 'Draft');
 
   dataSet.delete();
 
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   // Force multiple view rebuilds. Any stale retained id/raw index would show up
   // either as a wrong row count, wrong value, or RangeError from valueAt.
@@ -162,7 +175,7 @@ Future<void> _deleteRetainedInsertedRecordLeavesNoStaleViewIndex() async {
     sorts: const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')],
   );
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Charlie');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Bravo');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Charlie');
 }

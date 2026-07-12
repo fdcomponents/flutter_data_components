@@ -1,13 +1,27 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testCloseEvents();
-  await _testSilentBeforeCloseAbortDoesNotCloseOrSetErrors();
-  await _testVisibleBeforeCloseAbortSetsErrors();
-  await _testBeforeCloseAbortInEditKeepsEditStateAndBuffer();
-  await _testAfterCloseRunsAfterSuccessfulClose();
+void main() {
+  test('close fires callbacks around successful dataset cleanup', () async {
+    await _testCloseEvents();
+  });
+  test('silent beforeClose abort keeps data open without errors', () async {
+    await _testSilentBeforeCloseAbortDoesNotCloseOrSetErrors();
+  });
+  test(
+    'visible beforeClose abort keeps data open and reports the error',
+    () async {
+      await _testVisibleBeforeCloseAbortSetsErrors();
+    },
+  );
+  test('beforeClose abort preserves edit state and buffer', () async {
+    await _testBeforeCloseAbortInEditKeepsEditStateAndBuffer();
+  });
+  test('afterClose observes the fully closed internal state', () async {
+    await _testAfterCloseRunsAfterSuccessfulClose();
+  });
 }
 
 Future<void> _testCloseEvents() async {
@@ -20,15 +34,14 @@ Future<void> _testCloseEvents() async {
     ],
     beforeClose: (dataSet) {
       eventLog.add('beforeClose');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 2);
-      assert(dataSet.fieldValue('name') == 'Alpha');
+      expect(dataSet.state, FdcDataSetState.browse);
+      expect(dataSet.recordCount, 2);
+      expect(dataSet.fieldValue('name'), 'Alpha');
     },
     afterClose: (dataSet) {
       eventLog.add('afterClose');
-      assert(dataSet.state == FdcDataSetState.closed);
-      assert(dataSet.recordCount == 0);
-      assert(dataSet.recordCount == 0);
+      expect(dataSet.state, FdcDataSetState.closed);
+      expect(dataSet.recordCount, 0);
     },
 
     adapter: FdcMemoryDataAdapter(
@@ -43,12 +56,10 @@ Future<void> _testCloseEvents() async {
 
   dataSet.close();
 
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeClose');
-  assert(eventLog[1] == 'afterClose');
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.closed);
+  expect(dataSet.recordCount, 0);
+  expect(eventLog, <String>['beforeClose', 'afterClose']);
+  expect(dataSet.errors.message, isEmpty);
 }
 
 Future<void> _testSilentBeforeCloseAbortDoesNotCloseOrSetErrors() async {
@@ -74,11 +85,10 @@ Future<void> _testSilentBeforeCloseAbortDoesNotCloseOrSetErrors() async {
 
   dataSet.close();
 
-  assert(!afterCloseCalled);
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.recordCount > 0);
-  assert(dataSet.errors.messages.isEmpty);
+  expect(afterCloseCalled, isFalse);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.errors.message, isEmpty);
 }
 
 Future<void> _testVisibleBeforeCloseAbortSetsErrors() async {
@@ -99,10 +109,9 @@ Future<void> _testVisibleBeforeCloseAbortSetsErrors() async {
 
   dataSet.close();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages[0] == 'Close is not allowed.');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.errors.message, 'Close is not allowed.');
 }
 
 Future<void> _testBeforeCloseAbortInEditKeepsEditStateAndBuffer() async {
@@ -128,19 +137,19 @@ Future<void> _testBeforeCloseAbortInEditKeepsEditStateAndBuffer() async {
 
   dataSet.close();
 
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Changed');
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Changed');
+  expect(dataSet.errors.message, isEmpty);
 }
 
 Future<void> _testAfterCloseRunsAfterSuccessfulClose() async {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
     afterClose: (dataSet) {
-      assert(dataSet.state == FdcDataSetState.closed);
-      assert(dataSet.recordCount == 0);
-      assert(FdcDataSetInternal.activeIndex(dataSet) == -1);
+      expect(dataSet.state, FdcDataSetState.closed);
+      expect(dataSet.recordCount, 0);
+      expect(FdcDataSetInternal.activeIndex(dataSet), -1);
     },
 
     adapter: FdcMemoryDataAdapter(
@@ -154,8 +163,8 @@ Future<void> _testAfterCloseRunsAfterSuccessfulClose() async {
 
   dataSet.close();
 
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == -1);
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.closed);
+  expect(dataSet.recordCount, 0);
+  expect(FdcDataSetInternal.activeIndex(dataSet), -1);
+  expect(dataSet.errors.message, isEmpty);
 }

@@ -5,22 +5,62 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  _testFluentFilterRebuildsSingleDataSetView();
-  _testFilterChangeCancelsPendingEdit();
-  _testFilterChangeCancelsPendingInsert();
-  await _testBeforePostAbortKeepsPreviousFilter();
-  _testLegacyFilterApiDelegatesToFilterController();
-  _testUnknownFilterFieldThrows();
-  _testNullFilterOperatorsWorkForAllFieldTypes();
-  _testEmptyFilterOperatorsAreStringOnly();
-  _testWhitespaceFilterOperatorsAreStringOnly();
-  _testFilterAndSortResetToFirstVisibleRecord();
-  _testDatasetFilteredAndSortedInvariants();
-  _testDatasetFilteredIncludesSelectedFilterContext();
-  _testFilterBuilderExposesFieldItemsAndSelectedFilterSeparately();
-  _testFilterContextCopyWithCanClearSelected();
+void main() {
+  test(
+    'fluent filter rebuilds single data set view',
+    _testFluentFilterRebuildsSingleDataSetView,
+  );
+  test(
+    'filter change cancels pending edit',
+    _testFilterChangeCancelsPendingEdit,
+  );
+  test(
+    'filter change cancels pending insert',
+    _testFilterChangeCancelsPendingInsert,
+  );
+  test(
+    'before post abort keeps previous filter',
+    _testBeforePostAbortKeepsPreviousFilter,
+  );
+  test(
+    'legacy filter api delegates to filter controller',
+    _testLegacyFilterApiDelegatesToFilterController,
+  );
+  test('unknown filter field throws', _testUnknownFilterFieldThrows);
+  test(
+    'null filter operators work for all field types',
+    _testNullFilterOperatorsWorkForAllFieldTypes,
+  );
+  test(
+    'empty filter operators are string only',
+    _testEmptyFilterOperatorsAreStringOnly,
+  );
+  test(
+    'whitespace filter operators are string only',
+    _testWhitespaceFilterOperatorsAreStringOnly,
+  );
+  test(
+    'filter and sort reset to first visible record',
+    _testFilterAndSortResetToFirstVisibleRecord,
+  );
+  test(
+    'dataset filtered and sorted invariants',
+    _testDatasetFilteredAndSortedInvariants,
+  );
+  test(
+    'dataset filtered includes selected filter context',
+    _testDatasetFilteredIncludesSelectedFilterContext,
+  );
+  test(
+    'filter builder exposes field items and selected filter separately',
+    _testFilterBuilderExposesFieldItemsAndSelectedFilterSeparately,
+  );
+  test(
+    'filter context copy with can clear selected',
+    _testFilterContextCopyWithCanClearSelected,
+  );
 }
 
 void _testFluentFilterRebuildsSingleDataSetView() {
@@ -42,15 +82,15 @@ void _testFluentFilterRebuildsSingleDataSetView() {
       .greaterThan(10)
       .apply();
 
-  assert(dataSet.filter.fieldItems.length == 2);
-  assert(dataSet.filter.items.length == 2);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Gamma');
+  expect(dataSet.filter.fieldItems.length, 2);
+  expect(dataSet.filter.items.length, 2);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Gamma');
 
   dataSet.filter.clear();
 
-  assert(dataSet.filter.isEmpty);
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.filter, isEmpty);
+  expect(dataSet.recordCount, 3);
 }
 
 void _testFilterChangeCancelsPendingEdit() {
@@ -73,16 +113,16 @@ void _testFilterChangeCancelsPendingEdit() {
 
   dataSet.filter.where('status').equals('inactive').apply();
 
-  assert(events.length == 2);
-  assert(events[0] == 'beforePost');
-  assert(events[1] == 'afterPost');
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Beta');
+  expect(events.length, 2);
+  expect(events[0], 'beforePost');
+  expect(events[1], 'afterPost');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Beta');
 
   dataSet.filter.clear();
   dataSet.first();
-  assert(dataSet.fieldValue('name') == 'Changed');
+  expect(dataSet.fieldValue('name'), 'Changed');
 }
 
 void _testFilterChangeCancelsPendingInsert() {
@@ -98,15 +138,15 @@ void _testFilterChangeCancelsPendingInsert() {
   dataSet.append();
   dataSet.setFieldValue('name', 'New row');
   dataSet.setFieldValue('status', 'draft');
-  assert(dataSet.state == FdcDataSetState.insert);
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.state, FdcDataSetState.insert);
+  expect(dataSet.recordCount, 2);
 
   dataSet.filter.where('status').equals('active').apply();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.activeIndex(dataSet), 0);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 }
 
 Future<void> _testBeforePostAbortKeepsPreviousFilter() async {
@@ -123,8 +163,8 @@ Future<void> _testBeforePostAbortKeepsPreviousFilter() async {
   dataSet.open();
 
   dataSet.filter.where('status').equals('active').apply();
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.edit();
   dataSet.setFieldValue('name', 'Changed');
@@ -134,11 +174,11 @@ Future<void> _testBeforePostAbortKeepsPreviousFilter() async {
       .equals('inactive')
       .apply();
 
-  assert(changed == false);
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.filter.fieldItems.single.value == 'active');
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Changed');
+  expect(changed, false);
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.filter.fieldItems.single.value, 'active');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Changed');
 }
 
 void _testLegacyFilterApiDelegatesToFilterController() {
@@ -160,14 +200,14 @@ void _testLegacyFilterApiDelegatesToFilterController() {
     ),
   ]);
 
-  assert(dataSet.filter.fieldItems.length == 1);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.filter.fieldItems.length, 1);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.filter.clear();
 
-  assert(dataSet.filter.isEmpty);
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.filter, isEmpty);
+  expect(dataSet.recordCount, 2);
 }
 
 void _testUnknownFilterFieldThrows() {
@@ -187,14 +227,13 @@ void _testUnknownFilterFieldThrows() {
     error = e;
   }
 
-  assert(error is FdcDataSetException);
-  assert(
-    error.toString().contains(
-      'Unknown filter field "name222" in dataset FdcDataSet.',
-    ),
+  expect(error is FdcDataSetException, isTrue);
+  expect(
+    error.toString(),
+    contains('Unknown filter field "name222" in dataset FdcDataSet.'),
   );
-  assert(dataSet.filter.isEmpty);
-  assert(dataSet.recordCount == 1);
+  expect(dataSet.filter, isEmpty);
+  expect(dataSet.recordCount, 1);
 }
 
 void _testNullFilterOperatorsWorkForAllFieldTypes() {
@@ -216,14 +255,14 @@ void _testNullFilterOperatorsWorkForAllFieldTypes() {
   dataSet.open();
 
   dataSet.filter.where('amount').isNull().apply();
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   dataSet.filter.where('active').isNotNull().apply();
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   dataSet.filter.where('name').isNull().apply();
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('amount') == null);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('amount'), null);
 }
 
 void _testEmptyFilterOperatorsAreStringOnly() {
@@ -245,10 +284,10 @@ void _testEmptyFilterOperatorsAreStringOnly() {
   dataSet.open();
 
   dataSet.filter.where('name').isEmpty().apply();
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   dataSet.filter.where('name').isNotEmpty().apply();
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.recordCount, 2);
 
   Object? error;
   try {
@@ -257,9 +296,10 @@ void _testEmptyFilterOperatorsAreStringOnly() {
     error = e;
   }
 
-  assert(error is FdcDataSetException);
-  assert(
-    error.toString().contains(
+  expect(error is FdcDataSetException, isTrue);
+  expect(
+    error.toString(),
+    contains(
       'Filter operator isEmpty can only be used with string fields. Field "amount" is integer.',
     ),
   );
@@ -284,11 +324,11 @@ void _testWhitespaceFilterOperatorsAreStringOnly() {
   dataSet.open();
 
   dataSet.filter.where('name').isNullOrWhitespace().apply();
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   dataSet.filter.where('name').isNotNullOrWhitespace().apply();
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   Object? error;
   try {
@@ -297,9 +337,10 @@ void _testWhitespaceFilterOperatorsAreStringOnly() {
     error = e;
   }
 
-  assert(error is FdcDataSetException);
-  assert(
-    error.toString().contains(
+  expect(error is FdcDataSetException, isTrue);
+  expect(
+    error.toString(),
+    contains(
       'Filter operator isNullOrWhitespace can only be used with string fields. Field "amount" is integer.',
     ),
   );
@@ -341,20 +382,20 @@ void _testFilterAndSortResetToFirstVisibleRecord() {
   dataSet.open();
 
   dataSet.last();
-  assert(dataSet.fieldValue('name') == 'Bravo');
+  expect(dataSet.fieldValue('name'), 'Bravo');
 
   dataSet.filter.where('status').equals('active').apply();
 
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-  assert(dataSet.fieldValue('name') == 'Charlie');
+  expect(FdcDataSetInternal.activeIndex(dataSet), 0);
+  expect(dataSet.fieldValue('name'), 'Charlie');
 
   dataSet.last();
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.sort.set(const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')]);
 
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(FdcDataSetInternal.activeIndex(dataSet), 0);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 }
 
 void _testDatasetFilteredIncludesSelectedFilterContext() {
@@ -370,27 +411,27 @@ void _testDatasetFilteredIncludesSelectedFilterContext() {
 
   dataSet.selection.setSelectedAt(0, true);
 
-  assert(!dataSet.filter.active);
-  assert(!dataSet.filter.active);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.filter.active, isFalse);
 
   dataSet.filter.selected(true).apply();
 
-  assert(dataSet.filter.fieldItems.isEmpty);
-  assert(dataSet.filter.selectedFilter == true);
-  assert(dataSet.filter.context.selected == true);
-  assert(dataSet.filter.active);
-  assert(dataSet.filter.active);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.filter.fieldItems, isEmpty);
+  expect(dataSet.filter.selectedFilter, true);
+  expect(dataSet.filter.context.selected, true);
+  expect(dataSet.filter.active, isTrue);
+  expect(dataSet.filter.active, isTrue);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.filter.clear();
 
-  assert(dataSet.filter.fieldItems.isEmpty);
-  assert(dataSet.filter.selectedFilter == null);
-  assert(dataSet.filter.context.selected == null);
-  assert(!dataSet.filter.active);
-  assert(!dataSet.filter.active);
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.filter.fieldItems, isEmpty);
+  expect(dataSet.filter.selectedFilter, null);
+  expect(dataSet.filter.context.selected, null);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.recordCount, 2);
 }
 
 void _testFilterBuilderExposesFieldItemsAndSelectedFilterSeparately() {
@@ -406,29 +447,29 @@ void _testFilterBuilderExposesFieldItemsAndSelectedFilterSeparately() {
 
   final builder = dataSet.filter.selected(true);
 
-  assert(builder.fieldItems.isEmpty);
-  assert(builder.selectedFilter == true);
-  assert(builder.context.selected == true);
+  expect(builder.fieldItems, isEmpty);
+  expect(builder.selectedFilter, true);
+  expect(builder.context.selected, true);
 
   final updatedBuilder = builder.where('status').equals('active');
 
-  assert(identical(updatedBuilder, builder));
-  assert(builder.fieldItems.length == 1);
-  assert(builder.fieldItems.single.fieldName == 'status');
-  assert(builder.selectedFilter == true);
+  expect(identical(updatedBuilder, builder), isTrue);
+  expect(builder.fieldItems.length, 1);
+  expect(builder.fieldItems.single.fieldName, 'status');
+  expect(builder.selectedFilter, true);
 }
 
 void _testFilterContextCopyWithCanClearSelected() {
   const base = FdcDataSetFilterContext(selected: true);
 
   final retained = base.copyWith();
-  assert(retained.selected == true);
+  expect(retained.selected, true);
 
   final cleared = base.copyWith(selected: null);
-  assert(cleared.selected == null);
+  expect(cleared.selected, null);
 
   final changed = base.copyWith(selected: false);
-  assert(changed.selected == false);
+  expect(changed.selected, false);
 
   Object? error;
   try {
@@ -436,7 +477,7 @@ void _testFilterContextCopyWithCanClearSelected() {
   } on Object catch (e) {
     error = e;
   }
-  assert(error is ArgumentError);
+  expect(error is ArgumentError, isTrue);
 }
 
 void _testDatasetFilteredAndSortedInvariants() {
@@ -451,30 +492,30 @@ void _testDatasetFilteredAndSortedInvariants() {
   );
   dataSet.open();
 
-  assert(!dataSet.filter.active);
-  assert(!dataSet.sort.active);
-  assert(!dataSet.filter.active);
-  assert(!dataSet.sort.active);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.sort.active, isFalse);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.sort.active, isFalse);
 
   dataSet.filter.where('status').equals('active').apply();
 
-  assert(dataSet.filter.active);
-  assert(dataSet.filter.active);
-  assert(!dataSet.sort.active);
+  expect(dataSet.filter.active, isTrue);
+  expect(dataSet.filter.active, isTrue);
+  expect(dataSet.sort.active, isFalse);
 
   dataSet.sort.set(const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')]);
 
-  assert(dataSet.filter.active);
-  assert(dataSet.sort.active);
-  assert(dataSet.sort.active);
+  expect(dataSet.filter.active, isTrue);
+  expect(dataSet.sort.active, isTrue);
+  expect(dataSet.sort.active, isTrue);
 
   dataSet.filter.clear();
 
-  assert(!dataSet.filter.active);
-  assert(dataSet.sort.active);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.sort.active, isTrue);
 
   dataSet.sort.clear();
 
-  assert(!dataSet.filter.active);
-  assert(!dataSet.sort.active);
+  expect(dataSet.filter.active, isFalse);
+  expect(dataSet.sort.active, isFalse);
 }

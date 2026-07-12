@@ -1,17 +1,42 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _internalSetViewStateSortOnlyKeepsRetainedInsertedRows();
-  await _internalSetViewStateFilterAndSortClearsRetainedRowsByDefault();
-  await _cancelUpdatesAbortDoesNotBumpDataRevision();
-  await _sortDefaultsToAscending();
-  await _sortByApiSortsAndToggleSortByFlipsDirection();
-  await _sortApiAlwaysMovesToFirstVisibleRecord();
-  await _sortControllerFluentApiSupportsMultiSort();
-  await _sortControllerDoesNotApplyUntilApplyIsCalled();
-  await _cancelUpdatesNoUpdatesDoesNotBumpDataRevision();
+void main() {
+  test(
+    'set view state sort only keeps retained inserted rows',
+    _internalSetViewStateSortOnlyKeepsRetainedInsertedRows,
+  );
+  test(
+    'set view state filter and sort clears retained rows by default',
+    _internalSetViewStateFilterAndSortClearsRetainedRowsByDefault,
+  );
+  test(
+    'cancel updates abort does not bump data revision',
+    _cancelUpdatesAbortDoesNotBumpDataRevision,
+  );
+  test('sort defaults to ascending', _sortDefaultsToAscending);
+  test(
+    'sort by api sorts and toggle sort by flips direction',
+    _sortByApiSortsAndToggleSortByFlipsDirection,
+  );
+  test(
+    'sort api always moves to first visible record',
+    _sortApiAlwaysMovesToFirstVisibleRecord,
+  );
+  test(
+    'sort controller fluent api supports multi sort',
+    _sortControllerFluentApiSupportsMultiSort,
+  );
+  test(
+    'sort controller does not apply until apply is called',
+    _sortControllerDoesNotApplyUntilApplyIsCalled,
+  );
+  test(
+    'cancel updates no updates does not bump data revision',
+    _cancelUpdatesNoUpdatesDoesNotBumpDataRevision,
+  );
 }
 
 Future<void> _internalSetViewStateSortOnlyKeepsRetainedInsertedRows() async {
@@ -45,15 +70,15 @@ Future<void> _internalSetViewStateSortOnlyKeepsRetainedInsertedRows() async {
   dataSet.setFieldValue('status', 'draft');
   dataSet.post();
 
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   FdcDataSetInternal.setViewState(
     dataSet,
     sorts: const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')],
   );
 
-  assert(dataSet.recordCount == 3);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Aardvark');
+  expect(dataSet.recordCount, 3);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Aardvark');
 }
 
 Future<void>
@@ -88,7 +113,7 @@ _internalSetViewStateFilterAndSortClearsRetainedRowsByDefault() async {
   dataSet.setFieldValue('status', 'draft');
   dataSet.post();
 
-  assert(dataSet.recordCount == 3);
+  expect(dataSet.recordCount, 3);
 
   FdcDataSetInternal.setViewState(
     dataSet,
@@ -96,8 +121,8 @@ _internalSetViewStateFilterAndSortClearsRetainedRowsByDefault() async {
     sorts: const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')],
   );
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Bravo');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Bravo');
 }
 
 Future<void> _cancelUpdatesAbortDoesNotBumpDataRevision() async {
@@ -125,9 +150,9 @@ Future<void> _cancelUpdatesAbortDoesNotBumpDataRevision() async {
 
   dataSet.cancelUpdates();
 
-  assert(notifyCount == 0);
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.fieldValue('name') == 'Changed');
+  expect(notifyCount, 0);
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.fieldValue('name'), 'Changed');
 }
 
 Future<void> _sortDefaultsToAscending() async {
@@ -149,9 +174,9 @@ Future<void> _sortDefaultsToAscending() async {
     FdcDataSetSort(fieldName: 'name'),
   ]);
 
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name') == 'Charlie');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Bravo');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name'), 'Charlie');
 }
 
 Future<void> _sortByApiSortsAndToggleSortByFlipsDirection() async {
@@ -171,21 +196,21 @@ Future<void> _sortByApiSortsAndToggleSortByFlipsDirection() async {
 
   await dataSet.sort.sortBy('name').ascending.apply();
 
-  assert(dataSet.sort.items.length == 1);
-  assert(dataSet.sort.items.single.fieldName == 'name');
-  assert(dataSet.sort.items.single.sortType.isAscending);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
+  expect(dataSet.sort.items.length, 1);
+  expect(dataSet.sort.items.single.fieldName, 'name');
+  expect(dataSet.sort.items.single.sortType.isAscending, isTrue);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
 
   await dataSet.sort.toggleBy('NAME');
 
-  assert(dataSet.sort.items.length == 1);
-  assert(!dataSet.sort.items.single.sortType.isAscending);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Charlie');
+  expect(dataSet.sort.items.length, 1);
+  expect(dataSet.sort.items.single.sortType.isAscending, isFalse);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Charlie');
 
   await dataSet.sort.clear();
 
-  assert(dataSet.sort.items.isEmpty);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Charlie');
+  expect(dataSet.sort.items, isEmpty);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Charlie');
 }
 
 Future<void> _sortApiAlwaysMovesToFirstVisibleRecord() async {
@@ -204,36 +229,36 @@ Future<void> _sortApiAlwaysMovesToFirstVisibleRecord() async {
   await dataSet.open();
 
   dataSet.last();
-  assert(dataSet.recordNumber == 3);
+  expect(dataSet.recordNumber, 3);
 
   await dataSet.sort.set(const <FdcDataSetSort>[
     FdcDataSetSort(fieldName: 'name'),
   ]);
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.last();
-  assert(dataSet.recordNumber == 3);
+  expect(dataSet.recordNumber, 3);
 
   await dataSet.sort.set(const <FdcDataSetSort>[
     FdcDataSetSort(fieldName: 'name'),
   ]);
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 
   dataSet.last();
-  assert(dataSet.recordNumber == 3);
+  expect(dataSet.recordNumber, 3);
 
   await dataSet.sort.clear();
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Charlie');
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Charlie');
 
   dataSet.last();
-  assert(dataSet.recordNumber == 3);
+  expect(dataSet.recordNumber, 3);
 
   await dataSet.sort.clear();
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Charlie');
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Charlie');
 }
 
 Future<void> _sortControllerFluentApiSupportsMultiSort() async {
@@ -262,20 +287,20 @@ Future<void> _sortControllerFluentApiSupportsMultiSort() async {
       .descending
       .apply();
 
-  assert(dataSet.sort.items.length == 2);
-  assert(dataSet.sort.items.length == 2);
-  assert(dataSet.sort.items.first.fieldName == 'group');
-  assert(dataSet.sort.items.first.sortType == FdcSortType.ascending);
-  assert(dataSet.sort.items.last.fieldName == 'name');
-  assert(dataSet.sort.items.last.sortType == FdcSortType.descending);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'group') == 'A');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Charlie');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'group') == 'A');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Bravo');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'group') == 'B');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name') == 'Delta');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'group') == 'B');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'name') == 'Alpha');
+  expect(dataSet.sort.items.length, 2);
+  expect(dataSet.sort.items.length, 2);
+  expect(dataSet.sort.items.first.fieldName, 'group');
+  expect(dataSet.sort.items.first.sortType, FdcSortType.ascending);
+  expect(dataSet.sort.items.last.fieldName, 'name');
+  expect(dataSet.sort.items.last.sortType, FdcSortType.descending);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'group'), 'A');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Charlie');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'group'), 'A');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Bravo');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'group'), 'B');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 2, 'name'), 'Delta');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'group'), 'B');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 3, 'name'), 'Alpha');
 }
 
 Future<void> _sortControllerDoesNotApplyUntilApplyIsCalled() async {
@@ -295,14 +320,14 @@ Future<void> _sortControllerDoesNotApplyUntilApplyIsCalled() async {
 
   final pendingSort = dataSet.sort.sortBy('name').ascending;
 
-  assert(dataSet.sort.items.isEmpty);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Charlie');
+  expect(dataSet.sort.items, isEmpty);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Charlie');
 
   await pendingSort.apply();
 
-  assert(dataSet.sort.items.length == 1);
-  assert(dataSet.sort.items.single.fieldName == 'name');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
+  expect(dataSet.sort.items.length, 1);
+  expect(dataSet.sort.items.single.fieldName, 'name');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
 }
 
 Future<void> _cancelUpdatesNoUpdatesDoesNotBumpDataRevision() async {
@@ -325,8 +350,8 @@ Future<void> _cancelUpdatesNoUpdatesDoesNotBumpDataRevision() async {
 
   dataSet.cancelUpdates();
 
-  assert(notifyCount == 0);
-  assert(!dataSet.hasUpdates);
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
+  expect(notifyCount, 0);
+  expect(dataSet.hasUpdates, isFalse);
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
 }

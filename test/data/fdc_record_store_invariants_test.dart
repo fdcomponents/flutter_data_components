@@ -1,138 +1,117 @@
 import 'package:flutter_data_components/src/data/fdc_dataset_state.dart';
 import 'package:flutter_data_components/src/data/fdc_record.dart';
 import 'package:flutter_data_components/src/data/fdc_record_store.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  _recordsViewDoesNotAllowStructuralMutation();
-  _removeWhereKeepsLookupIndexInSync();
-  _replaceAllRebuildsLookupIndex();
-  _insertRawKeepsRawIndexLookupInSync();
-  _removeByIdKeepsRawIndexLookupInSync();
-  _duplicateRecordIdsAreRejected();
-}
+  test('records view rejects structural mutation and preserves indexes', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
+    final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
 
-void _recordsViewDoesNotAllowStructuralMutation() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
-  final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
+    store.insertRaw(0, first);
+    store.insertRaw(1, second);
 
-  store.insertRaw(0, first);
-  store.insertRaw(1, second);
+    expect(
+      () => store.records.removeWhere((record) => record.id == first.id),
+      throwsUnsupportedError,
+    );
+    expect(store.length, 2);
+    expect(store.byId(first.id), same(first));
+    expect(store.byId(second.id), same(second));
+  });
 
-  var threw = false;
-  try {
-    store.records.removeWhere((record) => record.id == first.id);
-    // ignore: avoid_catching_errors
-  } on UnsupportedError {
-    threw = true;
-  }
+  test('removeWhere keeps record and raw-index lookups synchronized', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
+    final second = FdcRecord(
+      id: store.takeNextRecordId(),
+      values: const ['B'],
+      state: FdcRecordState.deleted,
+    );
+    final third = FdcRecord(id: store.takeNextRecordId(), values: const ['C']);
 
-  assert(threw);
-  assert(store.length == 2);
-  assert(identical(store.byId(first.id), first));
-  assert(identical(store.byId(second.id), second));
-}
+    store.insertRaw(0, first);
+    store.insertRaw(1, second);
+    store.insertRaw(2, third);
 
-void _removeWhereKeepsLookupIndexInSync() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
-  final second = FdcRecord(
-    id: store.takeNextRecordId(),
-    values: const ['B'],
-    state: FdcRecordState.deleted,
-  );
-  final third = FdcRecord(id: store.takeNextRecordId(), values: const ['C']);
+    final removed = store.removeWhere(
+      (record) => record.state == FdcRecordState.deleted,
+    );
 
-  store.insertRaw(0, first);
-  store.insertRaw(1, second);
-  store.insertRaw(2, third);
+    expect(removed, 1);
+    expect(store.length, 2);
+    expect(store.byId(first.id), same(first));
+    expect(store.byId(second.id), isNull);
+    expect(store.byId(third.id), same(third));
+    expect(store.rawIndexForId(third.id), 1);
+  });
 
-  final removed = store.removeWhere(
-    (record) => record.state == FdcRecordState.deleted,
-  );
+  test('replaceAll rebuilds record and raw-index lookups', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
+    store.insertRaw(0, first);
 
-  assert(removed == 1);
-  assert(store.length == 2);
-  assert(identical(store.byId(first.id), first));
-  assert(store.byId(second.id) == null);
-  assert(identical(store.byId(third.id), third));
-  assert(store.rawIndexForId(third.id) == 1);
-}
+    final replacement = FdcRecord(
+      id: store.takeNextRecordId(),
+      values: const ['B'],
+    );
+    store.replaceAll(<FdcRecord>[replacement]);
 
-void _replaceAllRebuildsLookupIndex() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
-  store.insertRaw(0, first);
+    expect(store.length, 1);
+    expect(store.byId(first.id), isNull);
+    expect(store.byId(replacement.id), same(replacement));
+    expect(store.rawIndexForId(replacement.id), 0);
+  });
 
-  final replacement = FdcRecord(
-    id: store.takeNextRecordId(),
-    values: const ['B'],
-  );
-  store.replaceAll(<FdcRecord>[replacement]);
+  test('insertRaw shifts following raw-index lookups', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
+    final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
+    final inserted = FdcRecord(
+      id: store.takeNextRecordId(),
+      values: const ['C'],
+    );
 
-  assert(store.length == 1);
-  assert(store.byId(first.id) == null);
-  assert(identical(store.byId(replacement.id), replacement));
-  assert(store.rawIndexForId(replacement.id) == 0);
-}
+    store.insertRaw(0, first);
+    store.insertRaw(1, second);
+    store.insertRaw(1, inserted);
 
-void _insertRawKeepsRawIndexLookupInSync() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
-  final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
-  final inserted = FdcRecord(id: store.takeNextRecordId(), values: const ['C']);
+    expect(store.rawIndexForId(first.id), 0);
+    expect(store.rawIndexForId(inserted.id), 1);
+    expect(store.rawIndexForId(second.id), 2);
+  });
 
-  store.insertRaw(0, first);
-  store.insertRaw(1, second);
-  store.insertRaw(1, inserted);
+  test('removeById removes the record and shifts following raw indexes', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
+    final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
+    final third = FdcRecord(id: store.takeNextRecordId(), values: const ['C']);
 
-  assert(store.rawIndexForId(first.id) == 0);
-  assert(store.rawIndexForId(inserted.id) == 1);
-  assert(store.rawIndexForId(second.id) == 2);
-}
+    store.insertRaw(0, first);
+    store.insertRaw(1, second);
+    store.insertRaw(2, third);
 
-void _removeByIdKeepsRawIndexLookupInSync() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: store.takeNextRecordId(), values: const ['A']);
-  final second = FdcRecord(id: store.takeNextRecordId(), values: const ['B']);
-  final third = FdcRecord(id: store.takeNextRecordId(), values: const ['C']);
+    final removed = store.removeById(second.id);
 
-  store.insertRaw(0, first);
-  store.insertRaw(1, second);
-  store.insertRaw(2, third);
+    expect(removed, isTrue);
+    expect(store.length, 2);
+    expect(store.rawIndexForId(first.id), 0);
+    expect(store.rawIndexForId(second.id), isNull);
+    expect(store.rawIndexForId(third.id), 1);
+  });
 
-  final removed = store.removeById(second.id);
+  test('insertRaw and replaceAll reject duplicate record IDs', () {
+    final store = FdcRecordStore();
+    final first = FdcRecord(id: 7, values: const ['A']);
+    final duplicate = FdcRecord(id: 7, values: const ['B']);
 
-  assert(removed);
-  assert(store.length == 2);
-  assert(store.rawIndexForId(first.id) == 0);
-  assert(store.rawIndexForId(second.id) == null);
-  assert(store.rawIndexForId(third.id) == 1);
-}
+    store.insertRaw(0, first);
 
-void _duplicateRecordIdsAreRejected() {
-  final store = FdcRecordStore();
-  final first = FdcRecord(id: 7, values: const ['A']);
-  final duplicate = FdcRecord(id: 7, values: const ['B']);
-
-  store.insertRaw(0, first);
-
-  var insertThrew = false;
-  try {
-    store.insertRaw(1, duplicate);
-    // ignore: avoid_catching_errors
-  } on ArgumentError {
-    insertThrew = true;
-  }
-
-  var replaceThrew = false;
-  try {
-    store.replaceAll(<FdcRecord>[first, duplicate]);
-    // ignore: avoid_catching_errors
-  } on ArgumentError {
-    replaceThrew = true;
-  }
-
-  assert(insertThrew);
-  assert(replaceThrew);
+    expect(() => store.insertRaw(1, duplicate), throwsArgumentError);
+    expect(
+      () => store.replaceAll(<FdcRecord>[first, duplicate]),
+      throwsArgumentError,
+    );
+  });
 }

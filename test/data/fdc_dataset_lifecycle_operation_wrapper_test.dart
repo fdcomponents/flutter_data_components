@@ -1,9 +1,19 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testAbortLifecycleIsHandledThroughOperationWrapper();
-  await _testUnexpectedLifecycleErrorIsWrappedAndStored();
-  await _testValidationErrorStillRemainsValidationException();
+void main() {
+  test(
+    'abort lifecycle is handled through operation wrapper',
+    _testAbortLifecycleIsHandledThroughOperationWrapper,
+  );
+  test(
+    'unexpected lifecycle error is wrapped and stored',
+    _testUnexpectedLifecycleErrorIsWrappedAndStored,
+  );
+  test(
+    'validation error still remains validation exception',
+    _testValidationErrorStillRemainsValidationException,
+  );
 }
 
 Future<FdcDataSet> _newDataSet({
@@ -37,8 +47,8 @@ Future<void> _testAbortLifecycleIsHandledThroughOperationWrapper() async {
 
   dataSet.edit();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.errors.messages.isEmpty, isTrue);
 }
 
 Future<void> _testUnexpectedLifecycleErrorIsWrappedAndStored() async {
@@ -46,18 +56,19 @@ Future<void> _testUnexpectedLifecycleErrorIsWrappedAndStored() async {
     beforeEdit: (_) => throw Exception('edit failed'),
   );
 
-  var wrapped = false;
-  try {
-    dataSet.edit();
-  } on FdcDataSetException catch (error) {
-    wrapped = true;
-    assert(error.message == 'edit failed');
-  }
-
-  assert(wrapped);
-  assert(dataSet.errors.messages.count == 1);
-  assert(dataSet.errors.messages[0] == 'edit failed');
-  assert(dataSet.state == FdcDataSetState.browse);
+  expect(
+    dataSet.edit,
+    throwsA(
+      isA<FdcDataSetException>().having(
+        (error) => error.message,
+        'message',
+        'edit failed',
+      ),
+    ),
+  );
+  expect(dataSet.errors.messages.count, 1);
+  expect(dataSet.errors.messages[0], 'edit failed');
+  expect(dataSet.state, FdcDataSetState.browse);
 }
 
 Future<void> _testValidationErrorStillRemainsValidationException() async {
@@ -70,15 +81,8 @@ Future<void> _testValidationErrorStillRemainsValidationException() async {
   dataSet.edit();
   dataSet.setFieldValue('name', 'B');
 
-  var validationThrown = false;
-  try {
-    dataSet.post();
-  } on FdcDataSetValidationException {
-    validationThrown = true;
-  }
-
-  assert(validationThrown);
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.errors.messages.count == 1);
-  assert(dataSet.errors.messages[0] == 'Name is invalid');
+  expect(dataSet.post, throwsA(isA<FdcDataSetValidationException>()));
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.errors.messages.count, 1);
+  expect(dataSet.errors.messages[0], 'Name is invalid');
 }

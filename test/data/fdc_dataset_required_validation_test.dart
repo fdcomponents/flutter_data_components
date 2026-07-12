@@ -1,33 +1,51 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcStringField(size: 255, name: 'name', label: 'Name', required: true),
-      FdcStringField(size: 255, name: 'note'),
-    ],
+void main() {
+  test(
+    'post rejects an empty required field and publishes its field error',
+    () async {
+      final dataSet = FdcDataSet(
+        fields: const <FdcFieldDef>[
+          FdcStringField(
+            size: 255,
+            name: 'name',
+            label: 'Name',
+            required: true,
+          ),
+          FdcStringField(size: 255, name: 'note'),
+        ],
+        adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
+      );
 
-    adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
+      await dataSet.open();
+      dataSet.append();
+      dataSet.setFieldValue('note', 'Only optional field is filled');
+
+      expect(
+        dataSet.post,
+        throwsA(
+          isA<FdcDataSetValidationException>()
+              .having((error) => error.errors, 'errors', hasLength(1))
+              .having(
+                (error) => error.errors.single.fieldName,
+                'fieldName',
+                'name',
+              )
+              .having(
+                (error) => error.errors.single.code,
+                'code',
+                FdcValidationCodes.requiredField,
+              )
+              .having(
+                (error) => error.errors.single.message,
+                'message',
+                'Field Name is required.',
+              ),
+        ),
+      );
+
+      expect(dataSet.errors.message, 'Field Name is required.');
+    },
   );
-
-  await dataSet.open();
-  dataSet.append();
-  dataSet.setFieldValue('note', 'Only optional field is filled');
-
-  var validationThrown = false;
-  try {
-    dataSet.post();
-  } on FdcDataSetValidationException catch (error) {
-    validationThrown = true;
-    assert(error.errors.length == 1);
-    assert(error.errors.single.fieldName == 'name');
-    assert(error.errors.single.code == FdcValidationCodes.requiredField);
-    assert(error.errors.single.message == 'Field Name is required.');
-  }
-
-  assert(validationThrown);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages.count == 1);
-  assert(dataSet.errors.messages[0] == 'Field Name is required.');
-  assert(dataSet.errors.messages[0] == 'Field Name is required.');
 }

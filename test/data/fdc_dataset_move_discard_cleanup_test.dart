@@ -1,16 +1,33 @@
-import 'dart:async';
-
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testMoveToKeepsActiveInsertWhenPostValidationFails();
-  await _testCleanInsertIsCanceledBeforeNavigation();
-  await _testDirtyEditIsPostedBeforeNavigation();
-  await _testDirtyEditBlocksSortWhenPostFails();
-  await _testCleanInsertIsCanceledBeforeSort();
-  await _testCancelInsertedRecordSelectsNearestRemainingRow();
+void main() {
+  test(
+    'move to keeps active insert when post validation fails',
+    _testMoveToKeepsActiveInsertWhenPostValidationFails,
+  );
+  test(
+    'clean insert is canceled before navigation',
+    _testCleanInsertIsCanceledBeforeNavigation,
+  );
+  test(
+    'dirty edit is posted before navigation',
+    _testDirtyEditIsPostedBeforeNavigation,
+  );
+  test(
+    'dirty edit blocks sort when post fails',
+    _testDirtyEditBlocksSortWhenPostFails,
+  );
+  test(
+    'clean insert is canceled before sort',
+    _testCleanInsertIsCanceledBeforeSort,
+  );
+  test(
+    'cancel inserted record selects nearest remaining row',
+    _testCancelInsertedRecordSelectsNearestRemainingRow,
+  );
 }
 
 Future<void> _testMoveToKeepsActiveInsertWhenPostValidationFails() async {
@@ -34,21 +51,17 @@ Future<void> _testMoveToKeepsActiveInsertWhenPostValidationFails() async {
   dataSet.setFieldValue('name', 'Invalid draft');
   final insertIndex = FdcDataSetInternal.activeIndex(dataSet);
 
-  try {
-    dataSet.moveToRecord(2);
-    assert(
-      false,
-      'moveToRecord must not succeed when active insert cannot post.',
-    );
-  } on FdcDataSetValidationException {
-    // Expected.
-  }
+  expect(
+    () => dataSet.moveToRecord(2),
+    throwsA(isA<FdcDataSetValidationException>()),
+    reason: 'Navigation must not discard an insert that fails validation.',
+  );
 
-  assert(dataSet.state == FdcDataSetState.insert);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == insertIndex);
-  assert(dataSet.recordCount == 3);
-  assert(dataSet.fieldValue('name') == 'Invalid draft');
-  assert(dataSet.errors.messages.isNotEmpty);
+  expect(dataSet.state, FdcDataSetState.insert);
+  expect(FdcDataSetInternal.activeIndex(dataSet), insertIndex);
+  expect(dataSet.recordCount, 3);
+  expect(dataSet.fieldValue('name'), 'Invalid draft');
+  expect(dataSet.errors.message, isNotEmpty);
 }
 
 Future<void> _testCleanInsertIsCanceledBeforeNavigation() async {
@@ -69,14 +82,14 @@ Future<void> _testCleanInsertIsCanceledBeforeNavigation() async {
   await dataSet.open();
 
   dataSet.append();
-  assert(dataSet.state == FdcDataSetState.insert);
+  expect(dataSet.state, FdcDataSetState.insert);
 
   dataSet.first();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 2);
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 }
 
 Future<void> _testDirtyEditIsPostedBeforeNavigation() async {
@@ -101,10 +114,10 @@ Future<void> _testDirtyEditIsPostedBeforeNavigation() async {
 
   dataSet.next();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordNumber == 2);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordNumber, 2);
   dataSet.first();
-  assert(dataSet.fieldValue('name') == 'Alpha edited');
+  expect(dataSet.fieldValue('name'), 'Alpha edited');
 }
 
 Future<void> _testDirtyEditBlocksSortWhenPostFails() async {
@@ -132,11 +145,11 @@ Future<void> _testDirtyEditBlocksSortWhenPostFails() async {
     dataSet.sort.sortBy('id').ascending.apply(),
   );
 
-  assert(!sorted);
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Blocked edit');
-  assert(dataSet.sort.items.isEmpty);
+  expect(sorted, isFalse);
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Blocked edit');
+  expect(dataSet.sort.items, isEmpty);
 }
 
 Future<void> _testCleanInsertIsCanceledBeforeSort() async {
@@ -157,17 +170,17 @@ Future<void> _testCleanInsertIsCanceledBeforeSort() async {
   dataSet.open();
 
   dataSet.append();
-  assert(dataSet.state == FdcDataSetState.insert);
+  expect(dataSet.state, FdcDataSetState.insert);
 
   final sorted = await Future<bool>.value(
     dataSet.sort.sortBy('id').ascending.apply(),
   );
 
-  assert(sorted);
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(dataSet.recordNumber == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+  expect(sorted, isTrue);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 2);
+  expect(dataSet.recordNumber, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
 }
 
 Future<void> _testCancelInsertedRecordSelectsNearestRemainingRow() async {
@@ -194,8 +207,8 @@ Future<void> _testCancelInsertedRecordSelectsNearestRemainingRow() async {
 
   dataSet.cancel();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 1);
-  assert(dataSet.fieldValue('name') == 'Gamma');
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.activeIndex(dataSet), 1);
+  expect(dataSet.fieldValue('name'), 'Gamma');
 }

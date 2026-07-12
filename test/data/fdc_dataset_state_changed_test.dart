@@ -1,14 +1,24 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  _testStateChangedDoesNotFireOnConstruction();
-  await _testAdapterOpenStateChanged();
-  await _testEditPostCancelInsertCloseStateChanged();
-  await _testStateChangedDoesNotFireWhenStateIsUnchanged();
-  await _testOpenAsyncStateChanged();
-  await _testApplyUpdatesStateChanged();
+void main() {
+  test(
+    'state changed does not fire on construction',
+    _testStateChangedDoesNotFireOnConstruction,
+  );
+  test('adapter open state changed', _testAdapterOpenStateChanged);
+  test(
+    'edit post cancel insert close state changed',
+    _testEditPostCancelInsertCloseStateChanged,
+  );
+  test(
+    'state changed does not fire when state is unchanged',
+    _testStateChangedDoesNotFireWhenStateIsUnchanged,
+  );
+  test('open async state changed', _testOpenAsyncStateChanged);
+  test('apply updates state changed', _testApplyUpdatesStateChanged);
 }
 
 void _testStateChangedDoesNotFireOnConstruction() {
@@ -22,8 +32,8 @@ void _testStateChangedDoesNotFireOnConstruction() {
     },
   );
 
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(eventLog.isEmpty);
+  expect(dataSet.state, FdcDataSetState.closed);
+  expect(eventLog, isEmpty);
 }
 
 Future<void> _testAdapterOpenStateChanged() async {
@@ -42,19 +52,19 @@ Future<void> _testAdapterOpenStateChanged() async {
     ),
     onStateChanged: (dataSet, previousState, currentState) {
       eventLog.add('${previousState.name}->${currentState.name}');
-      assert(previousState == FdcDataSetState.closed);
-      assert(currentState == FdcDataSetState.browse);
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 2);
-      assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-      assert(dataSet.fieldValue('name') == 'Alpha');
+      expect(previousState, FdcDataSetState.closed);
+      expect(currentState, FdcDataSetState.browse);
+      expect(dataSet.state, FdcDataSetState.browse);
+      expect(dataSet.recordCount, 2);
+      expect(FdcDataSetInternal.activeIndex(dataSet), 0);
+      expect(dataSet.fieldValue('name'), 'Alpha');
     },
   );
 
   await dataSet.open();
 
-  assert(eventLog.length == 1);
-  assert(eventLog.single == 'closed->browse');
+  expect(eventLog.length, 1);
+  expect(eventLog.single, 'closed->browse');
 }
 
 Future<void> _testEditPostCancelInsertCloseStateChanged() async {
@@ -72,10 +82,10 @@ Future<void> _testEditPostCancelInsertCloseStateChanged() async {
     ),
     onStateChanged: (dataSet, previousState, currentState) {
       eventLog.add('${previousState.name}->${currentState.name}');
-      assert(dataSet.state == currentState);
+      expect(dataSet.state, currentState);
       if (currentState == FdcDataSetState.edit ||
           currentState == FdcDataSetState.insert) {
-        assert(dataSet.recordCount > 0);
+        expect(dataSet.recordCount, greaterThan(0));
       }
     },
   );
@@ -88,9 +98,9 @@ Future<void> _testEditPostCancelInsertCloseStateChanged() async {
   dataSet.cancel();
   dataSet.close();
 
-  assert(
-    eventLog.join('|') ==
-        'closed->browse|browse->edit|edit->browse|browse->insert|insert->browse|browse->closed',
+  expect(
+    eventLog.join('|'),
+    'closed->browse|browse->edit|edit->browse|browse->insert|insert->browse|browse->closed',
   );
 }
 
@@ -132,10 +142,10 @@ Future<void> _testStateChangedDoesNotFireWhenStateIsUnchanged() async {
     },
   );
 
-  assert(dataSetClosed.state == FdcDataSetState.closed);
-  assert(dataSetClosed.recordCount == 0);
-  assert(eventLog.length == 1);
-  assert(eventLog.single == 'closed->browse');
+  expect(dataSetClosed.state, FdcDataSetState.closed);
+  expect(dataSetClosed.recordCount, 0);
+  expect(eventLog.length, 1);
+  expect(eventLog.single, 'closed->browse');
 }
 
 Future<void> _testOpenAsyncStateChanged() async {
@@ -153,18 +163,18 @@ Future<void> _testOpenAsyncStateChanged() async {
     onStateChanged: (dataSet, previousState, currentState) {
       eventLog.add('${previousState.name}->${currentState.name}');
       if (currentState == FdcDataSetState.loading) {
-        assert(dataSet.recordCount == 0);
+        expect(dataSet.recordCount, 0);
       }
       if (currentState == FdcDataSetState.browse) {
-        assert(dataSet.recordCount == 1);
-        assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
+        expect(dataSet.recordCount, 1);
+        expect(FdcDataSetInternal.activeIndex(dataSet), 0);
       }
     },
   );
 
   await dataSet.open();
 
-  assert(eventLog.join('|') == 'closed->loading|loading->browse');
+  expect(eventLog.join('|'), 'closed->loading|loading->browse');
 }
 
 Future<void> _testApplyUpdatesStateChanged() async {
@@ -181,7 +191,7 @@ Future<void> _testApplyUpdatesStateChanged() async {
     adapter: adapter,
     onStateChanged: (dataSet, previousState, currentState) {
       eventLog.add('${previousState.name}->${currentState.name}');
-      assert(dataSet.state == currentState);
+      expect(dataSet.state, currentState);
     },
   );
 
@@ -189,16 +199,16 @@ Future<void> _testApplyUpdatesStateChanged() async {
   dataSet.edit();
   dataSet.setFieldValue('name', 'Changed');
   dataSet.post();
-  assert(dataSet.hasUpdates);
+  expect(dataSet.hasUpdates, isTrue);
 
   final result = await dataSet.applyUpdates();
 
-  assert(result.success);
-  assert(
-    eventLog.join('|') ==
-        'closed->loading|loading->browse|browse->edit|edit->browse|browse->applyingUpdates|applyingUpdates->browse',
+  expect(result.success, isTrue);
+  expect(
+    eventLog.join('|'),
+    'closed->loading|loading->browse|browse->edit|edit->browse|browse->applyingUpdates|applyingUpdates->browse',
   );
-  assert(!dataSet.hasUpdates);
+  expect(dataSet.hasUpdates, isFalse);
 }
 
 class _MemoryAdapter implements IFdcDataAdapter {

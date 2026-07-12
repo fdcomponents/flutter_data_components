@@ -1,4 +1,5 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 Object? _total(FdcCalculatedFieldContext context) {
   final quantity = context.numValue('quantity') ?? 0;
@@ -6,10 +7,19 @@ Object? _total(FdcCalculatedFieldContext context) {
   return quantity * price;
 }
 
-Future<void> main() async {
-  await _testLoadedRowsDoNotUseDefaultsButStillCalculateValues();
-  await _testRecordProjectionUsesActiveEditBuffer();
-  await _testInsertedRecordProjectionUsesDefaultsAndCalculatedValues();
+void main() {
+  test(
+    'loaded rows do not use defaults but still calculate values',
+    _testLoadedRowsDoNotUseDefaultsButStillCalculateValues,
+  );
+  test(
+    'record projection uses active edit buffer',
+    _testRecordProjectionUsesActiveEditBuffer,
+  );
+  test(
+    'inserted record projection uses defaults and calculated values',
+    _testInsertedRecordProjectionUsesDefaultsAndCalculatedValues,
+  );
 }
 
 Future<void> _testLoadedRowsDoNotUseDefaultsButStillCalculateValues() async {
@@ -41,11 +51,11 @@ Future<void> _testLoadedRowsDoNotUseDefaultsButStillCalculateValues() async {
 
   await dataSet.open();
 
-  assert(dataSet.fieldValue('name') == 'Alpha');
-  assert(dataSet.fieldValue('status') == null);
-  assert(dataSet.fieldValue('quantity') == null);
-  assert(dataSet.fieldValue('price') == null);
-  assert(dataSet.fieldByName('total').asDecimal == '0.00'.decimal);
+  expect(dataSet.fieldValue('name'), 'Alpha');
+  expect(dataSet.fieldValue('status'), null);
+  expect(dataSet.fieldValue('quantity'), null);
+  expect(dataSet.fieldValue('price'), null);
+  expect(dataSet.fieldByName('total').asDecimal, '0.00'.decimal);
 }
 
 Future<void> _testRecordProjectionUsesActiveEditBuffer() async {
@@ -74,12 +84,12 @@ Future<void> _testRecordProjectionUsesActiveEditBuffer() async {
   dataSet.edit();
   dataSet.setFieldValue('quantity', 3);
 
-  assert(dataSet.fieldValue('quantity') == 3);
-  assert(dataSet.fieldByName('total').asDecimal == '6.00'.decimal);
+  expect(dataSet.fieldValue('quantity'), 3);
+  expect(dataSet.fieldByName('total').asDecimal, '6.00'.decimal);
 
   dataSet.cancel();
-  assert(dataSet.fieldValue('quantity') == 1);
-  assert(dataSet.fieldByName('total').asDecimal == '2.00'.decimal);
+  expect(dataSet.fieldValue('quantity'), 1);
+  expect(dataSet.fieldByName('total').asDecimal, '2.00'.decimal);
 }
 
 Future<void>
@@ -107,7 +117,7 @@ _testInsertedRecordProjectionUsesDefaultsAndCalculatedValues() async {
   await dataSet.open();
   dataSet.append();
 
-  assert(dataSet.fieldValue('quantity') == 4);
-  assert(dataSet.fieldByName('price').asDecimal == '2.50'.decimal);
-  assert(dataSet.fieldByName('total').asDecimal == '10.00'.decimal);
+  expect(dataSet.fieldValue('quantity'), 4);
+  expect(dataSet.fieldByName('price').asDecimal, '2.50'.decimal);
+  expect(dataSet.fieldByName('total').asDecimal, '10.00'.decimal);
 }

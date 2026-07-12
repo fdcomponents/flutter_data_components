@@ -1,60 +1,89 @@
 import 'package:flutter_data_components/fdc.dart';
-import 'package:flutter_data_components/src/data/fdc_dataset.dart'
-    show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcIntegerField(name: 'id'),
-      FdcStringField(size: 255, name: 'name'),
-      FdcDecimalField(name: 'balance', precision: 12, scale: 2),
-    ],
+void main() {
+  group('EOF navigation', () {
+    test('tracks EOF while moving through populated records', () async {
+      final dataSet = _createDataSet();
 
-    adapter: FdcMemoryDataAdapter(
-      rows: const <Map<String, Object?>>[
-        {'id': 1, 'name': 'Alpha', 'balance': 1.0},
-        {'id': 2, 'name': 'Beta', 'balance': 2.0},
-        {'id': 3, 'name': 'Gamma', 'balance': 3.0},
-      ],
-    ),
-  );
+      expect(dataSet.eof, isTrue);
+      expect(dataSet.recordNumber, -1);
 
-  await dataSet.open();
+      await dataSet.open();
 
-  assert(dataSet.bof);
-  assert(!dataSet.eof);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 0);
-  assert(dataSet.recordNumber == 1);
+      expect(dataSet.eof, isFalse);
+      expect(dataSet.recordNumber, 1);
 
-  var updated = 0;
-  while (!dataSet.eof) {
-    dataSet.edit();
-    dataSet.fieldByName('name').value = 'test';
-    dataSet.fieldByName('balance').value = 10.09;
-    dataSet.post();
-    updated++;
-    dataSet.next();
-  }
+      dataSet.next();
+      expect(dataSet.eof, isFalse);
+      expect(dataSet.recordNumber, 2);
 
-  assert(updated == 3);
-  assert(dataSet.eof);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == dataSet.recordCount - 1);
-  assert(dataSet.recordNumber == dataSet.recordCount);
-  assert(dataSet.fieldValue('id') == 3);
+      dataSet.next();
+      expect(dataSet.eof, isTrue);
+      expect(dataSet.recordNumber, 2);
+      expect(dataSet.fieldValue('id'), 2);
 
-  for (var rowIndex = 0; rowIndex < dataSet.recordCount; rowIndex++) {
-    assert(
-      FdcDataSetInternal.fieldValueAt(dataSet, rowIndex, 'name') == 'test',
+      dataSet.first();
+      expect(dataSet.eof, isFalse);
+      expect(dataSet.recordNumber, 1);
+
+      dataSet.last();
+      expect(dataSet.eof, isTrue);
+      expect(dataSet.recordNumber, 2);
+      expect(dataSet.fieldValue('id'), 2);
+    });
+
+    test('moveToRecord updates EOF and rejects out-of-range records', () async {
+      final dataSet = _createDataSet();
+      await dataSet.open();
+
+      dataSet.moveToRecord(2);
+      expect(dataSet.recordNumber, 2);
+      expect(dataSet.eof, isTrue);
+
+      dataSet.moveToRecord(1);
+      expect(dataSet.recordNumber, 1);
+      expect(dataSet.eof, isFalse);
+
+      expect(() => dataSet.moveToRecord(50), throwsRangeError);
+    });
+
+    test(
+      'closed dataset is at EOF and rejects prior and next navigation',
+      () async {
+        final dataSet = _createDataSet();
+        await dataSet.open();
+
+        dataSet.close();
+
+        expect(dataSet.eof, isTrue);
+        expect(dataSet.recordNumber, -1);
+        expect(dataSet.prior, throwsStateError);
+        expect(dataSet.next, throwsStateError);
+      },
     );
-    assert(
-      FdcDataSetInternal.fieldValueAt(dataSet, rowIndex, 'balance') ==
-          '10.09'.decimalScale(2),
-    );
-  }
 
-  dataSet.prior();
-  assert(!dataSet.eof);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 1);
-  assert(dataSet.recordNumber == 2);
-  assert(dataSet.fieldValue('id') == 2);
+    test('empty opened dataset is simultaneously at BOF and EOF', () async {
+      final dataSet = _createDataSet();
+      (dataSet.adapter as FdcMemoryDataAdapter).replaceRows(
+        const <Map<String, Object?>>[],
+      );
+
+      await dataSet.open();
+
+      expect(dataSet.bof, isTrue);
+      expect(dataSet.eof, isTrue);
+      expect(dataSet.recordNumber, -1);
+    });
+  });
 }
+
+FdcDataSet _createDataSet() => FdcDataSet(
+  fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+  adapter: FdcMemoryDataAdapter(
+    rows: const <Map<String, Object?>>[
+      {'id': 1},
+      {'id': 2},
+    ],
+  ),
+);

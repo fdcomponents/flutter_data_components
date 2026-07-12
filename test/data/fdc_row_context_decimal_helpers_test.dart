@@ -1,9 +1,13 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _typedHelpersPreserveNullWhileValueUsesCalculatedZeroFallback();
+void main() {
+  test(
+    'typed helpers preserve null while value uses calculated zero fallback',
+    _typedHelpersPreserveNullWhileValueUsesCalculatedZeroFallback,
+  );
 }
 
 Future<void>
@@ -36,10 +40,10 @@ _typedHelpersPreserveNullWhileValueUsesCalculatedZeroFallback() async {
 
   await dataSet.open();
 
-  assert(seen['value'] == FdcDecimal.zero);
-  assert(seen['decimalValue'] == null);
-  assert(seen['decimalOrZero'] == FdcDecimal.zero);
-  assert(seen['numValue'] == null);
-  assert(seen['numOrZero'] == 0);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'calc') == '1.00'.decimal);
+  expect(seen['value'], FdcDecimal.zero);
+  expect(seen['decimalValue'], null);
+  expect(seen['decimalOrZero'], FdcDecimal.zero);
+  expect(seen['numValue'], null);
+  expect(seen['numOrZero'], 0);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'calc'), '1.00'.decimal);
 }

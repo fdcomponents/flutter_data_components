@@ -1,4 +1,5 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 Object? _total(FdcCalculatedFieldContext context) {
   final quantity = context.numValue('quantity') ?? 0;
@@ -6,10 +7,19 @@ Object? _total(FdcCalculatedFieldContext context) {
   return quantity * price;
 }
 
-Future<void> main() async {
-  await _testEditBufferWriteUpdatesCalculatedFieldsAndEvents();
-  await _testCurrentRecordWriteUpdatesStateAndCalculatedFields();
-  await _testOnNewRecordCanSeedDefaultsButNotCalculatedFields();
+void main() {
+  test(
+    'edit buffer write updates calculated fields and events',
+    _testEditBufferWriteUpdatesCalculatedFieldsAndEvents,
+  );
+  test(
+    'current record write updates state and calculated fields',
+    _testCurrentRecordWriteUpdatesStateAndCalculatedFields,
+  );
+  test(
+    'on new record can seed defaults but not calculated fields',
+    _testOnNewRecordCanSeedDefaultsButNotCalculatedFields,
+  );
 }
 
 Future<void> _testEditBufferWriteUpdatesCalculatedFieldsAndEvents() async {
@@ -41,14 +51,14 @@ Future<void> _testEditBufferWriteUpdatesCalculatedFieldsAndEvents() async {
   dataSet.edit();
   dataSet.setFieldValue('quantity', 4);
 
-  assert(dataSet.fieldValue('quantity') == 4);
-  assert(dataSet.fieldByName('total').asDecimal == '12.00'.decimal);
-  assert(changes.any((change) => change.startsWith('quantity:')));
-  assert(changes.any((change) => change.startsWith('total:')));
+  expect(dataSet.fieldValue('quantity'), 4);
+  expect(dataSet.fieldByName('total').asDecimal, '12.00'.decimal);
+  expect(changes.any((change) => change.startsWith('quantity:')), isTrue);
+  expect(changes.any((change) => change.startsWith('total:')), isTrue);
 
   dataSet.post();
-  assert(dataSet.fieldValue('quantity') == 4);
-  assert(dataSet.fieldByName('total').asDecimal == '12.00'.decimal);
+  expect(dataSet.fieldValue('quantity'), 4);
+  expect(dataSet.fieldByName('total').asDecimal, '12.00'.decimal);
 }
 
 Future<void> _testCurrentRecordWriteUpdatesStateAndCalculatedFields() async {
@@ -73,14 +83,14 @@ Future<void> _testCurrentRecordWriteUpdatesStateAndCalculatedFields() async {
 
   await dataSet.open();
 
-  assert(!dataSet.hasUpdates);
+  expect(dataSet.hasUpdates, isFalse);
   dataSet.edit();
   dataSet.setFieldValue('price', 5.0);
   dataSet.post();
 
-  assert(dataSet.fieldByName('price').asDecimal == '5.00'.decimal);
-  assert(dataSet.fieldByName('total').asDecimal == '10.00'.decimal);
-  assert(dataSet.hasUpdates);
+  expect(dataSet.fieldByName('price').asDecimal, '5.00'.decimal);
+  expect(dataSet.fieldByName('total').asDecimal, '10.00'.decimal);
+  expect(dataSet.hasUpdates, isTrue);
 }
 
 Future<void> _testOnNewRecordCanSeedDefaultsButNotCalculatedFields() async {
@@ -108,18 +118,11 @@ Future<void> _testOnNewRecordCanSeedDefaultsButNotCalculatedFields() async {
   await dataSet.open();
   dataSet.append();
 
-  assert(dataSet.fieldValue('code') == 'AUTO');
-  assert(dataSet.fieldByName('total').asDecimal == '16.00'.decimal);
+  expect(dataSet.fieldValue('code'), 'AUTO');
+  expect(dataSet.fieldByName('total').asDecimal, '16.00'.decimal);
 
   dataSet.setFieldValue('code', 'USER');
-  assert(dataSet.fieldValue('code') == 'USER');
+  expect(dataSet.fieldValue('code'), 'USER');
 
-  var calculatedBlocked = false;
-  try {
-    dataSet.setFieldValue('total', 123);
-    // ignore: avoid_catching_errors
-  } on StateError {
-    calculatedBlocked = true;
-  }
-  assert(calculatedBlocked);
+  expect(() => dataSet.setFieldValue('total', 123), throwsStateError);
 }

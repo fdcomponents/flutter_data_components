@@ -1,66 +1,92 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcIntegerField(
-        name: 'quantity',
-        label: 'Quantity',
-        minValue: 1,
-        maxValue: 10,
-      ),
-    ],
+void main() {
+  late FdcDataSet dataSet;
 
-    adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
-  );
-
-  await dataSet.open();
-  dataSet.append();
-  dataSet.setFieldValue('quantity', 0);
-
-  var minValidationThrown = false;
-  try {
-    dataSet.post();
-  } on FdcDataSetValidationException catch (error) {
-    minValidationThrown = true;
-    assert(error.errors.length == 1);
-    assert(error.errors.single.fieldName == 'quantity');
-    assert(error.errors.single.code == FdcValidationCodes.minValue);
-    assert(
-      error.errors.single.message ==
-          'Field Quantity must be greater than or equal to 1.',
+  setUp(() async {
+    dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[
+        FdcIntegerField(
+          name: 'quantity',
+          label: 'Quantity',
+          minValue: 1,
+          maxValue: 10,
+        ),
+      ],
+      adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
     );
-  }
+    await dataSet.open();
+    dataSet.append();
+  });
 
-  assert(minValidationThrown);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(
-    dataSet.errors.messages[0] ==
+  test(
+    'post rejects a value below the field minimum and preserves the edit value',
+    () {
+      dataSet.setFieldValue('quantity', 0);
+
+      expect(
+        dataSet.post,
+        throwsA(
+          isA<FdcDataSetValidationException>()
+              .having(
+                (error) => error.errors.single.fieldName,
+                'fieldName',
+                'quantity',
+              )
+              .having(
+                (error) => error.errors.single.code,
+                'code',
+                FdcValidationCodes.minValue,
+              )
+              .having(
+                (error) => error.errors.single.message,
+                'message',
+                'Field Quantity must be greater than or equal to 1.',
+              ),
+        ),
+      );
+
+      expect(
+        dataSet.errors.message,
         'Field Quantity must be greater than or equal to 1.',
+      );
+      expect(dataSet.fieldValue('quantity'), 0);
+    },
   );
-  assert(dataSet.fieldValue('quantity') == 0);
 
-  dataSet.setFieldValue('quantity', 11);
+  test(
+    'post rejects a value above the field maximum and preserves the edit value',
+    () {
+      dataSet.setFieldValue('quantity', 11);
 
-  var maxValidationThrown = false;
-  try {
-    dataSet.post();
-  } on FdcDataSetValidationException catch (error) {
-    maxValidationThrown = true;
-    assert(error.errors.length == 1);
-    assert(error.errors.single.fieldName == 'quantity');
-    assert(error.errors.single.code == FdcValidationCodes.maxValue);
-    assert(
-      error.errors.single.message ==
-          'Field Quantity must be less than or equal to 10.',
-    );
-  }
+      expect(
+        dataSet.post,
+        throwsA(
+          isA<FdcDataSetValidationException>()
+              .having(
+                (error) => error.errors.single.fieldName,
+                'fieldName',
+                'quantity',
+              )
+              .having(
+                (error) => error.errors.single.code,
+                'code',
+                FdcValidationCodes.maxValue,
+              )
+              .having(
+                (error) => error.errors.single.message,
+                'message',
+                'Field Quantity must be less than or equal to 10.',
+              ),
+        ),
+      );
 
-  assert(maxValidationThrown);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(
-    dataSet.errors.messages[0] ==
+      expect(
+        dataSet.errors.message,
         'Field Quantity must be less than or equal to 10.',
+      );
+      expect(dataSet.fieldValue('quantity'), 11);
+    },
   );
-  assert(dataSet.fieldValue('quantity') == 11);
 }

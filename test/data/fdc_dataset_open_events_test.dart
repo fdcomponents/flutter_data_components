@@ -1,203 +1,183 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testOpenEvents();
-  await _testAdapterOpenEvents();
-  _testAdapterConstructionDoesNotFireOpenEvents();
-  await _testSilentBeforeOpenAbortDoesNotOpenOrSetErrors();
-  await _testVisibleBeforeOpenAbortSetsErrors();
-  await _testOpenAsyncEvents();
-  await _testOpenAsyncBeforeOpenAbortDoesNotLoadAdapter();
-}
+void main() {
+  test('open fires callbacks in order for an empty memory adapter', () async {
+    final eventLog = <String>[];
 
-Future<void> _testOpenEvents() async {
-  final eventLog = <String>[];
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+      adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
+      beforeOpen: (dataSet) {
+        eventLog.add('beforeOpen');
+        expect(dataSet.state, FdcDataSetState.closed);
+        expect(dataSet.recordCount, 0);
+      },
+      afterOpen: (dataSet) {
+        eventLog.add('afterOpen');
+        expect(dataSet.state, FdcDataSetState.browse);
+        expect(dataSet.recordCount, 0);
+      },
+    );
 
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
-    beforeOpen: (dataSet) {
-      eventLog.add('beforeOpen');
-      assert(dataSet.state == FdcDataSetState.closed);
-      assert(dataSet.recordCount == 0);
-    },
-    afterOpen: (dataSet) {
-      eventLog.add('afterOpen');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 0);
-    },
-  );
+    await dataSet.open();
 
-  await dataSet.open();
+    expect(dataSet.state, FdcDataSetState.browse);
+    expect(eventLog, <String>['beforeOpen', 'afterOpen']);
+    expect(dataSet.errors.message, isEmpty);
+  });
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeOpen');
-  assert(eventLog[1] == 'afterOpen');
-  assert(dataSet.errors.messages.isEmpty);
-}
+  test('afterOpen observes rows loaded by the adapter', () async {
+    final eventLog = <String>[];
 
-Future<void> _testAdapterOpenEvents() async {
-  final eventLog = <String>[];
-
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcIntegerField(name: 'id'),
-      FdcStringField(size: 255, name: 'name'),
-    ],
-    adapter: FdcMemoryDataAdapter(
-      rows: const <Map<String, Object?>>[
-        <String, Object?>{'id': 1, 'name': 'Alpha'},
-        <String, Object?>{'id': 2, 'name': 'Beta'},
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[
+        FdcIntegerField(name: 'id'),
+        FdcStringField(size: 255, name: 'name'),
       ],
-    ),
-    beforeOpen: (dataSet) {
-      eventLog.add('beforeOpen');
-      assert(dataSet.state == FdcDataSetState.closed);
-      assert(dataSet.recordCount == 0);
-    },
-    afterOpen: (dataSet) {
-      eventLog.add('afterOpen');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 2);
-      assert(dataSet.fieldValue('name') == 'Alpha');
+      adapter: FdcMemoryDataAdapter(
+        rows: const <Map<String, Object?>>[
+          <String, Object?>{'id': 1, 'name': 'Alpha'},
+          <String, Object?>{'id': 2, 'name': 'Beta'},
+        ],
+      ),
+      beforeOpen: (dataSet) {
+        eventLog.add('beforeOpen');
+        expect(dataSet.state, FdcDataSetState.closed);
+        expect(dataSet.recordCount, 0);
+      },
+      afterOpen: (dataSet) {
+        eventLog.add('afterOpen');
+        expect(dataSet.state, FdcDataSetState.browse);
+        expect(dataSet.recordCount, 2);
+        expect(dataSet.fieldValue('name'), 'Alpha');
+      },
+    );
+
+    await dataSet.open();
+
+    expect(dataSet.recordCount, 2);
+    expect(eventLog, <String>['beforeOpen', 'afterOpen']);
+    expect(dataSet.errors.message, isEmpty);
+  });
+
+  test(
+    'constructing an adapter-backed dataset does not fire open callbacks',
+    () {
+      final eventLog = <String>[];
+
+      final dataSet = FdcDataSet(
+        fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+        adapter: FdcMemoryDataAdapter(
+          rows: const <Map<String, Object?>>[
+            <String, Object?>{'id': 1},
+          ],
+        ),
+        beforeOpen: (_) => eventLog.add('beforeOpen'),
+        afterOpen: (_) => eventLog.add('afterOpen'),
+      );
+
+      expect(dataSet.state, FdcDataSetState.closed);
+      expect(dataSet.recordCount, 0);
+      expect(eventLog, isEmpty);
+      expect(dataSet.errors.message, isEmpty);
     },
   );
 
-  await dataSet.open();
+  test(
+    'silent beforeOpen abort keeps the dataset closed without errors',
+    () async {
+      var afterOpenCalled = false;
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeOpen');
-  assert(eventLog[1] == 'afterOpen');
-  assert(dataSet.errors.messages.isEmpty);
-}
+      final dataSet = FdcDataSet(
+        fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+        adapter: FdcMemoryDataAdapter(
+          rows: const <Map<String, Object?>>[
+            <String, Object?>{'id': 1},
+          ],
+        ),
+        beforeOpen: (_) => throw const FdcDataSetAbortException.silent(),
+        afterOpen: (_) => afterOpenCalled = true,
+      );
 
-void _testAdapterConstructionDoesNotFireOpenEvents() {
-  final eventLog = <String>[];
+      await dataSet.open();
 
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    adapter: FdcMemoryDataAdapter(
-      rows: const <Map<String, Object?>>[
-        <String, Object?>{'id': 1},
+      expect(afterOpenCalled, isFalse);
+      expect(dataSet.state, FdcDataSetState.closed);
+      expect(dataSet.recordCount, 0);
+      expect(dataSet.errors.message, isEmpty);
+    },
+  );
+
+  test(
+    'visible beforeOpen abort exposes its message and keeps the dataset closed',
+    () async {
+      final dataSet = FdcDataSet(
+        fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+        adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
+        beforeOpen: (_) {
+          throw FdcDataSetAbortException('Open is not allowed.');
+        },
+      );
+
+      await dataSet.open();
+
+      expect(dataSet.state, FdcDataSetState.closed);
+      expect(dataSet.recordCount, 0);
+      expect(dataSet.errors.message, 'Open is not allowed.');
+    },
+  );
+
+  test('open loads a custom adapter once before firing afterOpen', () async {
+    final eventLog = <String>[];
+    final adapter = _MemoryLoadAdapter(<Map<String, Object?>>[
+      <String, Object?>{'id': 1, 'name': 'Alpha'},
+      <String, Object?>{'id': 2, 'name': 'Beta'},
+    ]);
+
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[
+        FdcIntegerField(name: 'id'),
+        FdcStringField(size: 255, name: 'name'),
       ],
-    ),
-    beforeOpen: (dataSet) {
-      eventLog.add('beforeOpen');
-    },
-    afterOpen: (dataSet) {
-      eventLog.add('afterOpen');
-    },
-  );
+      adapter: adapter,
+      beforeOpen: (dataSet) {
+        eventLog.add('beforeOpen');
+        expect(dataSet.state, FdcDataSetState.closed);
+      },
+      afterOpen: (dataSet) {
+        eventLog.add('afterOpen');
+        expect(dataSet.state, FdcDataSetState.browse);
+        expect(dataSet.recordCount, 2);
+      },
+    );
 
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(eventLog.isEmpty);
-  assert(dataSet.errors.messages.isEmpty);
-}
+    await dataSet.open();
 
-Future<void> _testSilentBeforeOpenAbortDoesNotOpenOrSetErrors() async {
-  var afterOpenCalled = false;
+    expect(adapter.loadCount, 1);
+    expect(dataSet.recordCount, 2);
+    expect(eventLog, <String>['beforeOpen', 'afterOpen']);
+    expect(dataSet.errors.message, isEmpty);
+  });
 
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    adapter: FdcMemoryDataAdapter(
-      rows: const <Map<String, Object?>>[
-        <String, Object?>{'id': 1},
-      ],
-    ),
-    beforeOpen: (dataSet) {
-      throw const FdcDataSetAbortException.silent();
-    },
-    afterOpen: (dataSet) {
-      afterOpenCalled = true;
-    },
-  );
+  test('beforeOpen abort prevents a custom adapter load', () async {
+    final adapter = _MemoryLoadAdapter(<Map<String, Object?>>[
+      <String, Object?>{'id': 1},
+    ]);
 
-  await dataSet.open();
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+      adapter: adapter,
+      beforeOpen: (_) => throw const FdcDataSetAbortException.silent(),
+    );
 
-  assert(dataSet.errors.messages.isEmpty);
-  assert(!afterOpenCalled);
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(dataSet.errors.messages.isEmpty);
-}
+    await dataSet.open();
 
-Future<void> _testVisibleBeforeOpenAbortSetsErrors() async {
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    adapter: FdcMemoryDataAdapter(rows: const <Map<String, Object?>>[]),
-    beforeOpen: (dataSet) {
-      throw FdcDataSetAbortException('Open is not allowed.');
-    },
-  );
-
-  await dataSet.open();
-
-  assert(dataSet.errors.messages[0] == 'Open is not allowed.');
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages[0] == 'Open is not allowed.');
-}
-
-Future<void> _testOpenAsyncEvents() async {
-  final eventLog = <String>[];
-  final adapter = _MemoryLoadAdapter(<Map<String, Object?>>[
-    <String, Object?>{'id': 1, 'name': 'Alpha'},
-    <String, Object?>{'id': 2, 'name': 'Beta'},
-  ]);
-
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcIntegerField(name: 'id'),
-      FdcStringField(size: 255, name: 'name'),
-    ],
-    adapter: adapter,
-    beforeOpen: (dataSet) {
-      eventLog.add('beforeOpen');
-      assert(dataSet.state == FdcDataSetState.closed);
-    },
-    afterOpen: (dataSet) {
-      eventLog.add('afterOpen');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 2);
-    },
-  );
-
-  await dataSet.open();
-
-  assert(adapter.loadCount == 1);
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeOpen');
-  assert(eventLog[1] == 'afterOpen');
-  assert(dataSet.errors.messages.isEmpty);
-}
-
-Future<void> _testOpenAsyncBeforeOpenAbortDoesNotLoadAdapter() async {
-  final adapter = _MemoryLoadAdapter(<Map<String, Object?>>[
-    <String, Object?>{'id': 1},
-  ]);
-
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    adapter: adapter,
-    beforeOpen: (dataSet) {
-      throw const FdcDataSetAbortException.silent();
-    },
-  );
-
-  await dataSet.open();
-
-  assert(dataSet.errors.messages.isEmpty);
-  assert(adapter.loadCount == 0);
-  assert(dataSet.state == FdcDataSetState.closed);
-  assert(dataSet.recordCount == 0);
-  assert(dataSet.errors.messages.isEmpty);
+    expect(adapter.loadCount, 0);
+    expect(dataSet.state, FdcDataSetState.closed);
+    expect(dataSet.recordCount, 0);
+    expect(dataSet.errors.message, isEmpty);
+  });
 }
 
 class _MemoryLoadAdapter implements IFdcDataAdapter {

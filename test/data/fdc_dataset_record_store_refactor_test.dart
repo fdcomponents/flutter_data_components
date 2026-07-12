@@ -1,10 +1,17 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testRecordStoreKeepsIdentityAcrossInsertDeleteAndReload();
-  await _testRecordStoreLookupSurvivesApplyAndCancelUpdates();
+void main() {
+  test(
+    'record store keeps identity across insert delete and reload',
+    _testRecordStoreKeepsIdentityAcrossInsertDeleteAndReload,
+  );
+  test(
+    'record store lookup survives apply and cancel updates',
+    _testRecordStoreLookupSurvivesApplyAndCancelUpdates,
+  );
 }
 
 Future<void> _testRecordStoreKeepsIdentityAcrossInsertDeleteAndReload() async {
@@ -30,14 +37,14 @@ Future<void> _testRecordStoreKeepsIdentityAcrossInsertDeleteAndReload() async {
   dataSet.setFieldValue('status', 'draft');
   dataSet.post();
 
-  assert(dataSet.recordCount == 3);
-  assert(dataSet.fieldValue('name') == 'Bravo');
+  expect(dataSet.recordCount, 3);
+  expect(dataSet.fieldValue('name'), 'Bravo');
 
   dataSet.delete();
 
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Alpha');
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name') == 'Charlie');
+  expect(dataSet.recordCount, 2);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Alpha');
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 1, 'name'), 'Charlie');
 
   dataSet.close();
   (dataSet.adapter as FdcMemoryDataAdapter).replaceRows(
@@ -47,8 +54,8 @@ Future<void> _testRecordStoreKeepsIdentityAcrossInsertDeleteAndReload() async {
   );
   await dataSet.open();
 
-  assert(dataSet.recordCount == 1);
-  assert(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name') == 'Delta');
+  expect(dataSet.recordCount, 1);
+  expect(FdcDataSetInternal.fieldValueAt(dataSet, 0, 'name'), 'Delta');
 }
 
 Future<void> _testRecordStoreLookupSurvivesApplyAndCancelUpdates() async {
@@ -68,12 +75,12 @@ Future<void> _testRecordStoreLookupSurvivesApplyAndCancelUpdates() async {
   dataSet.append();
   dataSet.setFieldValue('name', 'Charlie');
   dataSet.post();
-  assert(dataSet.hasUpdates);
+  expect(dataSet.hasUpdates, isTrue);
 
   dataSet.cancelUpdates();
-  assert(!dataSet.hasUpdates);
-  assert(dataSet.recordCount == 2);
+  expect(dataSet.hasUpdates, isFalse);
+  expect(dataSet.recordCount, 2);
 
   dataSet.last();
-  assert(dataSet.fieldValue('name') == 'Bravo');
+  expect(dataSet.fieldValue('name'), 'Bravo');
 }

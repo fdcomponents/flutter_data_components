@@ -1,30 +1,29 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  var afterEditCalled = false;
+void main() {
+  test('beforeEdit abort prevents edit and skips afterEdit', () async {
+    var afterEditCalled = false;
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
+      beforeEdit: (dataSet) {
+        throw FdcDataSetAbortException('Edit is not allowed.');
+      },
+      afterEdit: (dataSet) {
+        afterEditCalled = true;
+      },
+      adapter: FdcMemoryDataAdapter(
+        rows: <Map<String, Object?>>[
+          <String, Object?>{'id': 1},
+        ],
+      ),
+    );
 
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
-    beforeEdit: (dataSet) {
-      throw FdcDataSetAbortException('Edit is not allowed.');
-    },
-    afterEdit: (dataSet) {
-      afterEditCalled = true;
-    },
+    await dataSet.open();
+    dataSet.edit();
 
-    adapter: FdcMemoryDataAdapter(
-      rows: <Map<String, Object?>>[
-        <String, Object?>{'id': 1},
-      ],
-    ),
-  );
-
-  await dataSet.open();
-
-  dataSet.edit();
-  assert(!afterEditCalled);
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages[0] == 'Edit is not allowed.');
-  assert(dataSet.errors.messages[0] == 'Edit is not allowed.');
+    expect(afterEditCalled, isFalse);
+    expect(dataSet.state, FdcDataSetState.browse);
+    expect(dataSet.errors.message, 'Edit is not allowed.');
+  });
 }

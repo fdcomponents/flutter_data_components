@@ -1,10 +1,22 @@
 import 'package:flutter_data_components/fdc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  await _testCancelEditEvents();
-  await _testCancelInsertEvents();
-  await _testBeforeCancelAbortKeepsEditState();
-  await _testBeforeCancelAbortKeepsInsertState();
+void main() {
+  test(
+    'cancel edit restores the original record and fires callbacks',
+    () async {
+      await _testCancelEditEvents();
+    },
+  );
+  test('cancel insert removes the new record and fires callbacks', () async {
+    await _testCancelInsertEvents();
+  });
+  test('beforeCancel abort keeps the dataset in edit state', () async {
+    await _testBeforeCancelAbortKeepsEditState();
+  });
+  test('beforeCancel abort keeps the dataset in insert state', () async {
+    await _testBeforeCancelAbortKeepsInsertState();
+  });
 }
 
 Future<void> _testCancelEditEvents() async {
@@ -20,14 +32,14 @@ Future<void> _testCancelEditEvents() async {
     beforeCancel: (dataSet) {
       eventLog.add('beforeCancel');
       beforeCancelRecordId = dataSet.fieldValue('id');
-      assert(dataSet.state == FdcDataSetState.edit);
-      assert(dataSet.fieldValue('name') == 'Beta');
+      expect(dataSet.state, FdcDataSetState.edit);
+      expect(dataSet.fieldValue('name'), 'Beta');
     },
     afterCancel: (dataSet) {
       eventLog.add('afterCancel');
       afterCancelRecordId = dataSet.fieldValue('id');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.fieldValue('name') == 'Alpha');
+      expect(dataSet.state, FdcDataSetState.browse);
+      expect(dataSet.fieldValue('name'), 'Alpha');
     },
 
     adapter: FdcMemoryDataAdapter(
@@ -43,13 +55,11 @@ Future<void> _testCancelEditEvents() async {
   dataSet.setFieldValue('name', 'Beta');
   dataSet.cancel();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.fieldValue('name') == 'Alpha');
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeCancel');
-  assert(eventLog[1] == 'afterCancel');
-  assert(beforeCancelRecordId == afterCancelRecordId);
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.fieldValue('name'), 'Alpha');
+  expect(eventLog, <String>['beforeCancel', 'afterCancel']);
+  expect(afterCancelRecordId, beforeCancelRecordId);
+  expect(dataSet.errors.message, isEmpty);
 }
 
 Future<void> _testCancelInsertEvents() async {
@@ -64,14 +74,14 @@ Future<void> _testCancelInsertEvents() async {
     beforeCancel: (dataSet) {
       eventLog.add('beforeCancel');
       canceledRowName = dataSet.fieldValue('name');
-      assert(dataSet.state == FdcDataSetState.insert);
-      assert(dataSet.fieldValue('name') == 'Inserted');
+      expect(dataSet.state, FdcDataSetState.insert);
+      expect(dataSet.fieldValue('name'), 'Inserted');
     },
     afterCancel: (dataSet) {
       eventLog.add('afterCancel');
-      assert(dataSet.state == FdcDataSetState.browse);
-      assert(dataSet.recordCount == 1);
-      assert(dataSet.fieldValue('name') != canceledRowName);
+      expect(dataSet.state, FdcDataSetState.browse);
+      expect(dataSet.recordCount, 1);
+      expect(dataSet.fieldValue('name'), isNot(canceledRowName));
     },
 
     adapter: FdcMemoryDataAdapter(
@@ -87,13 +97,11 @@ Future<void> _testCancelInsertEvents() async {
   dataSet.setFieldValue('name', 'Inserted');
   dataSet.cancel();
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
-  assert(eventLog.length == 2);
-  assert(eventLog[0] == 'beforeCancel');
-  assert(eventLog[1] == 'afterCancel');
-  assert(dataSet.errors.messages.isEmpty);
+  expect(dataSet.state, FdcDataSetState.browse);
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.fieldValue('name'), 'Alpha');
+  expect(eventLog, <String>['beforeCancel', 'afterCancel']);
+  expect(dataSet.errors.message, isEmpty);
 }
 
 Future<void> _testBeforeCancelAbortKeepsEditState() async {
@@ -119,12 +127,10 @@ Future<void> _testBeforeCancelAbortKeepsEditState() async {
   dataSet.setFieldValue('name', 'Beta');
 
   dataSet.cancel();
-  assert(dataSet.state == FdcDataSetState.edit);
-  assert(dataSet.fieldValue('name') == 'Beta');
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages[0] == 'Cancel edit is not allowed.');
-  assert(dataSet.errors.messages[0] == 'Cancel edit is not allowed.');
+  expect(dataSet.state, FdcDataSetState.edit);
+  expect(dataSet.fieldValue('name'), 'Beta');
+  expect(dataSet.recordCount, 1);
+  expect(dataSet.errors.message, 'Cancel edit is not allowed.');
 }
 
 Future<void> _testBeforeCancelAbortKeepsInsertState() async {
@@ -149,13 +155,9 @@ Future<void> _testBeforeCancelAbortKeepsInsertState() async {
   dataSet.append();
   dataSet.setFieldValue('name', 'Inserted');
 
-  final insertedName = dataSet.fieldValue('name');
   dataSet.cancel();
-  assert(dataSet.state == FdcDataSetState.insert);
-  assert(dataSet.fieldValue('name') == insertedName);
-  assert(dataSet.fieldValue('name') == 'Inserted');
-  assert(dataSet.recordCount == 2);
-  assert(dataSet.errors.messages.isNotEmpty);
-  assert(dataSet.errors.messages[0] == 'Cancel insert is not allowed.');
-  assert(dataSet.errors.messages[0] == 'Cancel insert is not allowed.');
+  expect(dataSet.state, FdcDataSetState.insert);
+  expect(dataSet.fieldValue('name'), 'Inserted');
+  expect(dataSet.recordCount, 2);
+  expect(dataSet.errors.message, 'Cancel insert is not allowed.');
 }

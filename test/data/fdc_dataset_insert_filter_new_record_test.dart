@@ -1,60 +1,63 @@
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/data/fdc_dataset.dart'
     show FdcDataSetInternal;
+import 'package:flutter_test/flutter_test.dart';
 
-Future<void> main() async {
-  final dataSet = FdcDataSet(
-    fields: const <FdcFieldDef>[
-      FdcStringField(size: 255, name: 'name'),
-      FdcStringField(size: 255, name: 'status'),
-    ],
-    onNewRecord: (dataSet) {
-      dataSet.setFieldValue('name', 'New row');
-      dataSet.setFieldValue('status', 'draft');
-    },
-
-    adapter: FdcMemoryDataAdapter(
-      rows: const <Map<String, Object?>>[
-        {'name': 'Alpha', 'status': 'active'},
+void main() {
+  test('fdc dataset insert filter new record', () async {
+    final dataSet = FdcDataSet(
+      fields: const <FdcFieldDef>[
+        FdcStringField(size: 255, name: 'name'),
+        FdcStringField(size: 255, name: 'status'),
       ],
-    ),
-  );
+      onNewRecord: (dataSet) {
+        dataSet.setFieldValue('name', 'New row');
+        dataSet.setFieldValue('status', 'draft');
+      },
 
-  await dataSet.open();
+      adapter: FdcMemoryDataAdapter(
+        rows: const <Map<String, Object?>>[
+          {'name': 'Alpha', 'status': 'active'},
+        ],
+      ),
+    );
 
-  await dataSet.filter.set(const <FdcDataSetFilter>[
-    FdcDataSetFilter(
-      fieldName: 'status',
-      operator: FdcFilterOperator.equals,
-      value: 'active',
-    ),
-  ]);
+    await dataSet.open();
 
-  assert(dataSet.recordCount == 1);
-  dataSet.append();
+    await dataSet.filter.set(const <FdcDataSetFilter>[
+      FdcDataSetFilter(
+        fieldName: 'status',
+        operator: FdcFilterOperator.equals,
+        value: 'active',
+      ),
+    ]);
 
-  assert(dataSet.state == FdcDataSetState.insert);
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 1);
-  assert(dataSet.fieldValue('name') == 'New row');
-  assert(dataSet.fieldValue('status') == 'draft');
+    expect(dataSet.recordCount, 1);
+    dataSet.append();
 
-  dataSet.post();
+    expect(dataSet.state, FdcDataSetState.insert);
+    expect(dataSet.recordCount, 2);
+    expect(FdcDataSetInternal.activeIndex(dataSet), 1);
+    expect(dataSet.fieldValue('name'), 'New row');
+    expect(dataSet.fieldValue('status'), 'draft');
 
-  assert(dataSet.state == FdcDataSetState.browse);
-  assert(dataSet.recordCount == 2);
-  assert(FdcDataSetInternal.activeIndex(dataSet) == 1);
-  assert(dataSet.fieldValue('name') == 'New row');
-  assert(dataSet.fieldValue('status') == 'draft');
+    dataSet.post();
 
-  await dataSet.filter.set(const <FdcDataSetFilter>[
-    FdcDataSetFilter(
-      fieldName: 'status',
-      operator: FdcFilterOperator.equals,
-      value: 'active',
-    ),
-  ]);
+    expect(dataSet.state, FdcDataSetState.browse);
+    expect(dataSet.recordCount, 2);
+    expect(FdcDataSetInternal.activeIndex(dataSet), 1);
+    expect(dataSet.fieldValue('name'), 'New row');
+    expect(dataSet.fieldValue('status'), 'draft');
 
-  assert(dataSet.recordCount == 1);
-  assert(dataSet.fieldValue('name') == 'Alpha');
+    await dataSet.filter.set(const <FdcDataSetFilter>[
+      FdcDataSetFilter(
+        fieldName: 'status',
+        operator: FdcFilterOperator.equals,
+        value: 'active',
+      ),
+    ]);
+
+    expect(dataSet.recordCount, 1);
+    expect(dataSet.fieldValue('name'), 'Alpha');
+  });
 }
