@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/src/common/menu/fdc_menu_entry.dart';
+import 'package:flutter_data_components/src/common/menu/fdc_menu_overlay.dart';
 import 'package:flutter_data_components/src/common/menu/fdc_menu_renderer.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -128,4 +129,39 @@ void main() {
       expect(find.text('Dynamic action'), findsOneWidget);
     },
   );
+
+  testWidgets('dismissAll closes an open FDC menu', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: FdcMenuAnchor(
+              openOnTap: true,
+              entries: <FdcMenuEntry>[
+                FdcMenuAction(text: 'Dismissible action'),
+              ],
+              child: SizedBox(
+                key: ValueKey<String>('dismiss-menu-anchor'),
+                width: 120,
+                height: 32,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tapAt(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('dismiss-menu-anchor')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Dismissible action'), findsOneWidget);
+
+    FdcMenuOverlay.dismissAll();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dismissible action'), findsNothing);
+  });
 }

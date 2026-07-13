@@ -29,6 +29,7 @@ export 'src/common/focus/fdc_focus.dart'
 export 'src/common/lookup/fdc_lookup_context.dart' show FdcLookupContext;
 export 'src/common/lookup/fdc_lookup_result.dart'
     show FdcLookupMode, FdcLookupResult;
+export 'src/common/menu/fdc_menu_overlay.dart' show FdcMenuOverlay;
 export 'src/common/theme/fdc_theme.dart' show FdcTheme, FdcThemeData;
 export 'src/common/widgets/counter/fdc_counter_style.dart' show FdcCounterStyle;
 export 'src/common/widgets/progress/fdc_progress_widgets.dart'

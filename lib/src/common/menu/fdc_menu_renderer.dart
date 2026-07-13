@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/fdc_grid_theme.dart';
 import 'fdc_menu_entry.dart';
+import 'fdc_menu_overlay_registry.dart';
 
 class FdcMenuAnchor extends StatefulWidget {
   const FdcMenuAnchor({
@@ -72,6 +73,7 @@ class _FdcMenuAnchorState extends State<FdcMenuAnchor> {
   @override
   void initState() {
     super.initState();
+    FdcMenuOverlayRegistry.register(_dismiss);
     _resolvedEntries = widget.entries;
     _scheduleRequestedOpen();
   }
@@ -83,6 +85,18 @@ class _FdcMenuAnchorState extends State<FdcMenuAnchor> {
       _resolvedEntries = widget.entries;
     }
     _scheduleRequestedOpen();
+  }
+
+  @override
+  void dispose() {
+    FdcMenuOverlayRegistry.unregister(_dismiss);
+    super.dispose();
+  }
+
+  void _dismiss() {
+    if (_controller.isOpen) {
+      _controller.close();
+    }
   }
 
   void _scheduleRequestedOpen() {
