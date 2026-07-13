@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('FdcApp provides app-level grid and editor theme data', (
@@ -139,7 +140,7 @@ void main() {
       expect(editorTheme, FdcEditorThemes.light);
 
       await tester.pumpWidget(build(ThemeMode.dark));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
       expect(gridTheme, FdcGridThemes.dark);
       expect(editorTheme, FdcEditorThemes.dark);
     },

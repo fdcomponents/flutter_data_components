@@ -113,9 +113,13 @@ void _testFilterChangeCancelsPendingEdit() {
 
   dataSet.filter.where('status').equals('inactive').apply();
 
-  expect(events.length, 2);
-  expect(events[0], 'beforePost');
-  expect(events[1], 'afterPost');
+  expect(
+    events,
+    <String>['beforePost', 'afterPost'],
+    reason:
+        'Applying a filter while editing must post exactly once before '
+        'rebuilding the filtered view.',
+  );
   expect(dataSet.state, FdcDataSetState.browse);
   expect(dataSet.recordCount, 1);
   expect(dataSet.fieldValue('name'), 'Beta');
@@ -412,14 +416,12 @@ void _testDatasetFilteredIncludesSelectedFilterContext() {
   dataSet.selection.setSelectedAt(0, true);
 
   expect(dataSet.filter.active, isFalse);
-  expect(dataSet.filter.active, isFalse);
 
   dataSet.filter.selected(true).apply();
 
   expect(dataSet.filter.fieldItems, isEmpty);
   expect(dataSet.filter.selectedFilter, true);
   expect(dataSet.filter.context.selected, true);
-  expect(dataSet.filter.active, isTrue);
   expect(dataSet.filter.active, isTrue);
   expect(dataSet.recordCount, 1);
   expect(dataSet.fieldValue('name'), 'Alpha');
@@ -429,7 +431,6 @@ void _testDatasetFilteredIncludesSelectedFilterContext() {
   expect(dataSet.filter.fieldItems, isEmpty);
   expect(dataSet.filter.selectedFilter, null);
   expect(dataSet.filter.context.selected, null);
-  expect(dataSet.filter.active, isFalse);
   expect(dataSet.filter.active, isFalse);
   expect(dataSet.recordCount, 2);
 }
@@ -494,19 +495,15 @@ void _testDatasetFilteredAndSortedInvariants() {
 
   expect(dataSet.filter.active, isFalse);
   expect(dataSet.sort.active, isFalse);
-  expect(dataSet.filter.active, isFalse);
-  expect(dataSet.sort.active, isFalse);
 
   dataSet.filter.where('status').equals('active').apply();
 
-  expect(dataSet.filter.active, isTrue);
   expect(dataSet.filter.active, isTrue);
   expect(dataSet.sort.active, isFalse);
 
   dataSet.sort.set(const <FdcDataSetSort>[FdcDataSetSort(fieldName: 'name')]);
 
   expect(dataSet.filter.active, isTrue);
-  expect(dataSet.sort.active, isTrue);
   expect(dataSet.sort.active, isTrue);
 
   dataSet.filter.clear();

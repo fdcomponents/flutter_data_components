@@ -35,8 +35,15 @@ void main() {
 
     await dataSet.open();
 
-    expect(phases, contains(FdcDataSetWorkPhase.load));
-    expect(phases.last, FdcDataSetWorkPhase.idle);
+    expect(
+      phases,
+      const <FdcDataSetWorkPhase>[
+        FdcDataSetWorkPhase.load,
+        FdcDataSetWorkPhase.idle,
+      ],
+      reason:
+          'Opening the adapter must publish one load transition followed by idle.',
+    );
     expect(dataSet.work.isWorking, isFalse);
     expect(dataSet.work.progress, isNull);
   });
@@ -55,8 +62,15 @@ void main() {
 
     await dataSet.filter.where('name').contains('Al').apply();
 
-    expect(phases, contains(FdcDataSetWorkPhase.filter));
-    expect(phases.last, FdcDataSetWorkPhase.idle);
+    expect(
+      phases,
+      const <FdcDataSetWorkPhase>[
+        FdcDataSetWorkPhase.filter,
+        FdcDataSetWorkPhase.idle,
+      ],
+      reason:
+          'Applying one filter must publish one filter transition followed by idle.',
+    );
     expect(dataSet.work.isWorking, isFalse);
     expect(dataSet.recordCount, 1);
   });
@@ -75,8 +89,15 @@ void main() {
 
     await dataSet.sort.set(const [FdcDataSetSort(fieldName: 'id')]);
 
-    expect(phases, contains(FdcDataSetWorkPhase.sort));
-    expect(phases.last, FdcDataSetWorkPhase.idle);
+    expect(
+      phases,
+      const <FdcDataSetWorkPhase>[
+        FdcDataSetWorkPhase.sort,
+        FdcDataSetWorkPhase.idle,
+      ],
+      reason:
+          'Applying one sort must publish one sort transition followed by idle.',
+    );
     expect(dataSet.work.isWorking, isFalse);
     expect(dataSet['id'], 1);
   });

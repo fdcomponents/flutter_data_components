@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 const _zeroDebounceHeader = FdcGridHeader(
   height: 32,
@@ -57,22 +58,22 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.text('Name'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.sort.active, isTrue);
     expect(find.byIcon(Icons.north), findsOneWidget);
 
     await tester.enterText(find.byType(EditableText).at(1), 'Ready');
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.filter.active, isTrue);
     expect(find.text('Beta'), findsNothing);
 
     await tester.tap(
       find.byKey(const ValueKey('fdc_grid_toolbar_search_button')),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     final toolbarSearchField = find.byKey(
       const ValueKey('fdc_grid_toolbar_search_field'),
     );
@@ -84,11 +85,11 @@ void main() {
       ),
       'Alpha',
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.search.active, isTrue);
 
     dataSet.close();
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.isOpen, isFalse);
     expect(dataSet.sort.active, isFalse);

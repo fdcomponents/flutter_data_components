@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 FdcDataSet _editorEventsDataSet() {
   final dataSet = FdcDataSet(
@@ -42,9 +43,9 @@ Future<void> _pumpEditorHost(
 
 Future<void> _selectComboOption(WidgetTester tester, String label) async {
   await tester.tap(find.byType(FdcComboEdit<String>));
-  await tester.pumpAndSettle();
+  await pumpPendingFrames(tester);
   await tester.tap(find.text(label).last);
-  await tester.pumpAndSettle();
+  await pumpPendingFrames(tester);
 }
 
 void main() {
@@ -112,14 +113,22 @@ void main() {
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
 
+    final relevantEvents = events
+        .where(
+          (event) => event.startsWith('text-') || event.startsWith('combo-'),
+        )
+        .toList();
+
     expect(
-      events,
-      containsAll(<String>[
+      relevantEvents,
+      unorderedEquals(<String>[
         'text-enter:FdcFieldEventHost.editor:name:Alice:Alice:0',
         'text-exit:FdcFieldEventHost.editor:name:Alice:Alice:0',
         'combo-enter:FdcFieldEventHost.editor:status:open:open:0',
         'combo-exit:FdcFieldEventHost.editor:status:open:open:0',
       ]),
+      reason:
+          'Each relevant standalone editor must emit one enter and one exit event.',
     );
     // Do not assert global focus ordering here. Flutter may report the
     // newly-focused editor before the previously-focused editor loses focus,
@@ -175,11 +184,14 @@ void main() {
     expect(dataSet.fieldValue('name'), 'Resolved');
     expect(
       events,
-      containsAllInOrder(<String>[
+      <String>[
         'changing:FdcFieldEventHost.editor:name:Alice->Megan:Alice->Megan',
         'changing:FdcFieldEventHost.editor:name:Megan->BLOCK:Megan->BLOCK',
         'changing:FdcFieldEventHost.editor:name:Megan->SCAN:Megan->SCAN',
-      ]),
+      ],
+      reason:
+          'Each explicit text commit must emit exactly one editor-host '
+          'value-changing callback in commit order.',
     );
   });
 

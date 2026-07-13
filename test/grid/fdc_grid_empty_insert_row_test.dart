@@ -6,6 +6,7 @@ import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/grid/widgets/fdc_grid_row.dart'
     show FdcGridRowWidget;
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 class _ReadOnlyMemoryDataAdapter extends FdcMemoryDataAdapter {
   _ReadOnlyMemoryDataAdapter({required super.rows});
@@ -76,7 +77,7 @@ void main() {
     final dataSet = _emptyPeopleDataSet();
 
     await tester.pumpWidget(_host(dataSet: dataSet));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.recordCount, 0);
     expect(find.byType(FdcGridRowWidget), findsOneWidget);
@@ -88,7 +89,7 @@ void main() {
     final dataSet = _emptyPeopleDataSet(readOnly: true);
 
     await tester.pumpWidget(_host(dataSet: dataSet));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.recordCount, 0);
     expect(find.byType(FdcGridRowWidget), findsNothing);
@@ -107,7 +108,7 @@ void main() {
     ]);
 
     await tester.pumpWidget(_host(dataSet: dataSet));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.filter.active, isTrue);
     expect(dataSet.recordCount, 0);
@@ -120,14 +121,14 @@ void main() {
     final dataSet = _emptyPeopleDataSet();
 
     await tester.pumpWidget(_host(dataSet: dataSet));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.byType(FdcGridRowWidget).first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.recordCount, 1);
     expect(dataSet.state, FdcDataSetState.insert);

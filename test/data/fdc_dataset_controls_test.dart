@@ -151,13 +151,16 @@ Future<void> main() async {
       expect(notifications, 0);
       expect(
         events,
-        containsAllInOrder(<String>[
+        <String>[
           'state:FdcDataSetState.browse->FdcDataSetState.edit',
           'field:name:One->Changed',
           'state:FdcDataSetState.edit->FdcDataSetState.browse',
           'before:1->2',
           'after:1->2',
-        ]),
+        ],
+        reason:
+            'Disabling controls must suppress listener notifications '
+            'without changing typed lifecycle callback order.',
       );
 
       dataSet.enableControls();

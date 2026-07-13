@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/grid/widgets/fdc_grid_status_bar.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('status bar composes start center and end items', (tester) async {
@@ -129,7 +130,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(find.text('Page'), findsOneWidget);
     expect(find.text('of'), findsOneWidget);

@@ -1,18 +1,20 @@
-part of '../fdc_grid_widget_ux_test.dart';
+import 'fdc_grid_ux_test_exports.dart';
 
-const _basicGridOptions = FdcGridOptions(
+export 'fdc_grid_ux_test_exports.dart';
+
+const uxBasicGridOptions = FdcGridOptions(
   allowColumnSorting: true,
   allowColumnReordering: true,
 );
-const _basicRowIndicator = FdcGridRowIndicator(visible: true);
+const uxBasicRowIndicator = FdcGridRowIndicator(visible: true);
 
-const _filterGridOptions = FdcGridOptions(
+const uxFilterGridOptions = FdcGridOptions(
   allowColumnSorting: true,
   allowColumnReordering: true,
 );
-const _filterRowIndicator = FdcGridRowIndicator(visible: true);
+const uxFilterRowIndicator = FdcGridRowIndicator(visible: true);
 
-const _zeroDebounceHeader = FdcGridHeader(
+const uxZeroDebounceHeader = FdcGridHeader(
   height: 32,
   filters: FdcGridHeaderFilters(
     visible: true,
@@ -20,7 +22,7 @@ const _zeroDebounceHeader = FdcGridHeader(
   ),
 );
 
-const _hiddenZeroDebounceHeader = FdcGridHeader(
+const uxHiddenZeroDebounceHeader = FdcGridHeader(
   height: 32,
   filters: FdcGridHeaderFilters(
     visible: true,
@@ -29,7 +31,7 @@ const _hiddenZeroDebounceHeader = FdcGridHeader(
   ),
 );
 
-Finder _headerRangeFilterTextFields() {
+Finder uxHeaderRangeFilterTextFields() {
   return find.byWidgetPredicate((widget) {
     if (widget is! TextField) {
       return false;
@@ -41,22 +43,22 @@ Finder _headerRangeFilterTextFields() {
   });
 }
 
-class _ReadOnlyMemoryDataAdapter extends FdcMemoryDataAdapter {
-  _ReadOnlyMemoryDataAdapter({required super.rows});
+class UxReadOnlyMemoryDataAdapter extends FdcMemoryDataAdapter {
+  UxReadOnlyMemoryDataAdapter({required super.rows});
 
   @override
   bool get readOnly => true;
 }
 
-class _BlockedLoadWaiter {
-  _BlockedLoadWaiter(this.count, this.completer);
+class UxBlockedLoadWaiter {
+  UxBlockedLoadWaiter(this.count, this.completer);
 
   final int count;
   final Completer<void> completer;
 }
 
-class _EmptyFilteredPagedSummaryAdapter extends FdcDataAdapter {
-  _EmptyFilteredPagedSummaryAdapter()
+class UxEmptyFilteredPagedSummaryAdapter extends FdcDataAdapter {
+  UxEmptyFilteredPagedSummaryAdapter()
     : super(
         readOnly: true,
         capabilities: const FdcDataAdapterCapabilities(
@@ -95,9 +97,9 @@ class _EmptyFilteredPagedSummaryAdapter extends FdcDataAdapter {
       if (gate != null) {
         return gate.future;
       }
-      return _aggregateResult('0.00');
+      return uxAggregateResult('0.00');
     }
-    return _aggregateResult('300.00');
+    return uxAggregateResult('300.00');
   }
 
   @override
@@ -105,7 +107,7 @@ class _EmptyFilteredPagedSummaryAdapter extends FdcDataAdapter {
     return const FdcDataApplyResult.success();
   }
 
-  static FdcDataAggregateResult _aggregateResult(String value) {
+  static FdcDataAggregateResult uxAggregateResult(String value) {
     return FdcDataAggregateResult(
       values: <FdcDataAggregateKey, Object?>{
         const FdcDataAggregateKey(
@@ -119,43 +121,44 @@ class _EmptyFilteredPagedSummaryAdapter extends FdcDataAdapter {
   }
 }
 
-class _GatedFilterMemoryDataAdapter extends FdcMemoryDataAdapter {
-  _GatedFilterMemoryDataAdapter({required super.rows});
+class UxGatedFilterMemoryDataAdapter extends FdcMemoryDataAdapter {
+  UxGatedFilterMemoryDataAdapter({required super.rows});
 
   final List<FdcDataLoadRequest> loadRequests = <FdcDataLoadRequest>[];
-  final List<Completer<void>> _blockedLoadGates = <Completer<void>>[];
-  final List<_BlockedLoadWaiter> _blockedLoadWaiters = <_BlockedLoadWaiter>[];
-  int _blockedLoadCount = 0;
+  final List<Completer<void>> uxBlockedLoadGates = <Completer<void>>[];
+  final List<UxBlockedLoadWaiter> uxBlockedLoadWaiters =
+      <UxBlockedLoadWaiter>[];
+  int uxBlockedLoadCount = 0;
 
   int get loadCount => loadRequests.length;
 
-  int get blockedLoadCount => _blockedLoadCount;
+  int get blockedLoadCount => uxBlockedLoadCount;
 
   Future<void> waitForBlockedLoadCount(int count) {
-    if (_blockedLoadCount >= count) {
+    if (uxBlockedLoadCount >= count) {
       return Future<void>.value();
     }
     final completer = Completer<void>();
-    _blockedLoadWaiters.add(_BlockedLoadWaiter(count, completer));
+    uxBlockedLoadWaiters.add(UxBlockedLoadWaiter(count, completer));
     return completer.future;
   }
 
   void completeNextBlockedLoad() {
-    if (_blockedLoadGates.isEmpty) {
+    if (uxBlockedLoadGates.isEmpty) {
       throw StateError('No blocked load is waiting.');
     }
-    final gate = _blockedLoadGates.removeAt(0);
+    final gate = uxBlockedLoadGates.removeAt(0);
     if (!gate.isCompleted) {
       gate.complete();
     }
   }
 
-  void _markBlockedLoadStarted() {
-    _blockedLoadCount++;
-    for (var i = _blockedLoadWaiters.length - 1; i >= 0; i--) {
-      final waiter = _blockedLoadWaiters[i];
-      if (_blockedLoadCount >= waiter.count) {
-        _blockedLoadWaiters.removeAt(i);
+  void uxMarkBlockedLoadStarted() {
+    uxBlockedLoadCount++;
+    for (var i = uxBlockedLoadWaiters.length - 1; i >= 0; i--) {
+      final waiter = uxBlockedLoadWaiters[i];
+      if (uxBlockedLoadCount >= waiter.count) {
+        uxBlockedLoadWaiters.removeAt(i);
         if (!waiter.completer.isCompleted) {
           waiter.completer.complete();
         }
@@ -168,16 +171,16 @@ class _GatedFilterMemoryDataAdapter extends FdcMemoryDataAdapter {
     loadRequests.add(request);
     if (request.filters.isNotEmpty) {
       final gate = Completer<void>();
-      _blockedLoadGates.add(gate);
-      _markBlockedLoadStarted();
+      uxBlockedLoadGates.add(gate);
+      uxMarkBlockedLoadStarted();
       await gate.future;
     }
     return super.load(request);
   }
 }
 
-class _AsyncApplyMemoryAdapter implements IFdcDataAdapter {
-  _AsyncApplyMemoryAdapter(this.rows);
+class UxAsyncApplyMemoryAdapter implements IFdcDataAdapter {
+  UxAsyncApplyMemoryAdapter(this.rows);
 
   final List<Map<String, Object?>> rows;
   final List<FdcChangeSet> applyCalls = <FdcChangeSet>[];
@@ -245,7 +248,7 @@ class _AsyncApplyMemoryAdapter implements IFdcDataAdapter {
   }
 }
 
-FdcGridToolbar _withToolbarVisibility(FdcGridToolbar toolbar, bool visible) {
+FdcGridToolbar uxWithToolbarVisibility(FdcGridToolbar toolbar, bool visible) {
   if (visible) {
     return toolbar;
   }
@@ -261,15 +264,15 @@ FdcGridToolbar _withToolbarVisibility(FdcGridToolbar toolbar, bool visible) {
   );
 }
 
-Widget _testHost({
+Widget uxTestHost({
   required FdcDataSet dataSet,
   required List<FdcGridColumn<dynamic>> columns,
-  FdcGridOptions options = _basicGridOptions,
+  FdcGridOptions options = uxBasicGridOptions,
   FdcGridColumnPinning pinning = const FdcGridColumnPinning(enabled: true),
-  FdcGridRowIndicator rowIndicator = _basicRowIndicator,
+  FdcGridRowIndicator rowIndicator = uxBasicRowIndicator,
   FdcGridCellIndicator cellIndicator = const FdcGridCellIndicator(),
   FdcGridStyle style = const FdcGridStyle(),
-  FdcGridHeader header = _hiddenZeroDebounceHeader,
+  FdcGridHeader header = uxHiddenZeroDebounceHeader,
   bool toolbarVisible = true,
   FdcGridToolbar toolbar = const FdcGridToolbar(),
   FdcGridSummary summary = const FdcGridSummary(),
@@ -290,7 +293,7 @@ Widget _testHost({
           pinning: pinning,
           rowIndicator: rowIndicator,
           cellIndicator: cellIndicator,
-          toolbar: _withToolbarVisibility(toolbar, toolbarVisible),
+          toolbar: uxWithToolbarVisibility(toolbar, toolbarVisible),
           header: header.copyWith(height: 32),
           summary: summary,
           statusBar: statusBar,
@@ -302,23 +305,41 @@ Widget _testHost({
   );
 }
 
-Widget _buildToolbarTestItem(BuildContext context) {
+Widget uxBuildToolbarTestItem(BuildContext context) {
   return const Text(
     'Custom toolbar item',
     key: ValueKey('fdc-toolbar-test-item'),
   );
 }
 
-Future<void> _pumpGrid(
+Future<void> uxPumpPendingFrames(
+  WidgetTester tester, {
+  int maxFrames = 120,
+}) async {
+  for (var frame = 0; frame < maxFrames; frame++) {
+    await tester.pump(const Duration(milliseconds: 16));
+    if (!tester.binding.hasScheduledFrame) {
+      return;
+    }
+  }
+
+  throw TestFailure(
+    'The grid UX did not become idle within $maxFrames frames. '
+    'This usually indicates a repeating animation, an unresolved async '
+    'operation, or a test that should wait for a more specific condition.',
+  );
+}
+
+Future<void> uxPumpGrid(
   WidgetTester tester, {
   required FdcDataSet dataSet,
   required List<FdcGridColumn<dynamic>> columns,
-  FdcGridOptions options = _basicGridOptions,
+  FdcGridOptions options = uxBasicGridOptions,
   FdcGridColumnPinning pinning = const FdcGridColumnPinning(enabled: true),
-  FdcGridRowIndicator rowIndicator = _basicRowIndicator,
+  FdcGridRowIndicator rowIndicator = uxBasicRowIndicator,
   FdcGridCellIndicator cellIndicator = const FdcGridCellIndicator(),
   FdcGridStyle style = const FdcGridStyle(),
-  FdcGridHeader header = _hiddenZeroDebounceHeader,
+  FdcGridHeader header = uxHiddenZeroDebounceHeader,
   bool toolbarVisible = true,
   FdcGridToolbar toolbar = const FdcGridToolbar(),
   FdcGridSummary summary = const FdcGridSummary(),
@@ -328,7 +349,7 @@ Future<void> _pumpGrid(
   double height = 320,
 }) async {
   await tester.pumpWidget(
-    _testHost(
+    uxTestHost(
       dataSet: dataSet,
       columns: columns,
       options: options,
@@ -346,20 +367,20 @@ Future<void> _pumpGrid(
       height: height,
     ),
   );
-  await tester.pumpAndSettle();
+  await uxPumpPendingFrames(tester);
 }
 
-Future<void> _pumpBasicGrid(
+Future<void> uxPumpBasicGrid(
   WidgetTester tester, {
   required FdcDataSet dataSet,
   required List<FdcGridColumn<dynamic>> columns,
   FdcGridStyle style = const FdcGridStyle(),
   FdcGridCellIndicator cellIndicator = const FdcGridCellIndicator(),
-  FdcGridHeader header = _hiddenZeroDebounceHeader,
+  FdcGridHeader header = uxHiddenZeroDebounceHeader,
   double width = 600,
   double height = 320,
 }) {
-  return _pumpGrid(
+  return uxPumpGrid(
     tester,
     dataSet: dataSet,
     columns: columns,
@@ -372,19 +393,19 @@ Future<void> _pumpBasicGrid(
   );
 }
 
-Future<void> _pumpFilterGrid(
+Future<void> uxPumpFilterGrid(
   WidgetTester tester, {
   required FdcDataSet dataSet,
   required List<FdcGridColumn<dynamic>> columns,
-  FdcGridOptions options = _filterGridOptions,
-  FdcGridRowIndicator rowIndicator = _filterRowIndicator,
+  FdcGridOptions options = uxFilterGridOptions,
+  FdcGridRowIndicator rowIndicator = uxFilterRowIndicator,
   FdcGridCellIndicator cellIndicator = const FdcGridCellIndicator(),
   FdcGridStyle style = const FdcGridStyle(),
-  FdcGridHeader header = _zeroDebounceHeader,
+  FdcGridHeader header = uxZeroDebounceHeader,
   double width = 600,
   double height = 320,
 }) {
-  return _pumpGrid(
+  return uxPumpGrid(
     tester,
     dataSet: dataSet,
     columns: columns,
@@ -398,7 +419,7 @@ Future<void> _pumpFilterGrid(
   );
 }
 
-Future<void> _pumpIndicatorGrid(
+Future<void> uxPumpIndicatorGrid(
   WidgetTester tester, {
   required FdcDataSet dataSet,
   required List<FdcGridColumn<dynamic>> columns,
@@ -409,7 +430,7 @@ Future<void> _pumpIndicatorGrid(
   double width = 600,
   double height = 320,
 }) {
-  return _pumpGrid(
+  return uxPumpGrid(
     tester,
     dataSet: dataSet,
     columns: columns,
@@ -422,14 +443,14 @@ Future<void> _pumpIndicatorGrid(
       ),
     ),
     header: headerFiltersVisible
-        ? _zeroDebounceHeader
-        : _hiddenZeroDebounceHeader,
+        ? uxZeroDebounceHeader
+        : uxHiddenZeroDebounceHeader,
     width: width,
     height: height,
   );
 }
 
-FdcDataSet _peopleDataSet() {
+FdcDataSet uxPeopleDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcIntegerField(name: 'id'),
@@ -447,14 +468,14 @@ FdcDataSet _peopleDataSet() {
   return dataSet;
 }
 
-FdcDataSet _readOnlyPeopleDataSet() {
+FdcDataSet uxReadOnlyPeopleDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcIntegerField(name: 'id'),
       FdcStringField(size: 255, name: 'name', label: 'Name', required: true),
     ],
 
-    adapter: _ReadOnlyMemoryDataAdapter(
+    adapter: UxReadOnlyMemoryDataAdapter(
       rows: const <Map<String, Object?>>[
         {'id': 1, 'name': 'Alpha'},
         {'id': 2, 'name': 'Beta'},
@@ -465,7 +486,7 @@ FdcDataSet _readOnlyPeopleDataSet() {
   return dataSet;
 }
 
-FdcDataSet _wideSelectionDataSet() {
+FdcDataSet uxWideSelectionDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcStringField(size: 255, name: 'c1'),
@@ -498,7 +519,7 @@ FdcDataSet _wideSelectionDataSet() {
   return dataSet;
 }
 
-FdcDataSet _wideTallTextDataSet() {
+FdcDataSet uxWideTallTextDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcStringField(size: 255, name: 'c1'),
@@ -525,7 +546,7 @@ FdcDataSet _wideTallTextDataSet() {
   return dataSet;
 }
 
-FdcDataSet _wideTallBooleanDataSet() {
+FdcDataSet uxWideTallBooleanDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcStringField(size: 255, name: 'c1'),
@@ -552,7 +573,7 @@ FdcDataSet _wideTallBooleanDataSet() {
   return dataSet;
 }
 
-FdcDataSet _wideTallDateDataSet() {
+FdcDataSet uxWideTallDateDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcStringField(size: 255, name: 'c1'),
@@ -579,7 +600,7 @@ FdcDataSet _wideTallDateDataSet() {
   return dataSet;
 }
 
-FdcDataSet _peopleStatusDataSet() {
+FdcDataSet uxPeopleStatusDataSet() {
   final dataSet = FdcDataSet(
     fields: const <FdcFieldDef>[
       FdcIntegerField(name: 'id'),
@@ -598,7 +619,7 @@ FdcDataSet _peopleStatusDataSet() {
   return dataSet;
 }
 
-FdcDataSet _quantityDataSet({FdcDataSetValidationError? onValidationError}) {
+FdcDataSet uxQuantityDataSet({FdcDataSetValidationError? onValidationError}) {
   final dataSet = FdcDataSet(
     onValidationError: onValidationError,
     fields: const <FdcFieldDef>[
@@ -621,9 +642,9 @@ FdcDataSet _quantityDataSet({FdcDataSetValidationError? onValidationError}) {
   return dataSet;
 }
 
-Object? _constantId(FdcCalculatedFieldContext context) => 1;
+Object? uxConstantId(FdcCalculatedFieldContext context) => 1;
 
-FdcDataSet _calculatedDataSet() {
+FdcDataSet uxCalculatedDataSet() {
   final dataSet = FdcDataSet(
     fields: <FdcFieldDef>[
       const FdcIntegerField(name: 'quantity'),
@@ -650,14 +671,14 @@ FdcDataSet _calculatedDataSet() {
   return dataSet;
 }
 
-Future<void> _pressCtrlDelete(WidgetTester tester) async {
+Future<void> uxPressCtrlDelete(WidgetTester tester) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
   await tester.sendKeyEvent(LogicalKeyboardKey.delete);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-  await tester.pumpAndSettle();
+  await uxPumpPendingFrames(tester);
 }
 
-bool _isSummaryCellPositionWidget(Widget widget) {
+bool uxIsSummaryCellPositionWidget(Widget widget) {
   final key = widget.key;
   if (key is! ValueKey<Object?>) {
     return false;

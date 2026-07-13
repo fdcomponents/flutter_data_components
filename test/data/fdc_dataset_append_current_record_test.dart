@@ -52,7 +52,12 @@ void main() {
           FdcDataSetInternal.fieldValueAt(dataSet, rowIndex, 'id'),
       ];
 
-      expect(ids, containsAll(<Object?>[1, 2, 3, 4]));
+      expect(
+        ids,
+        unorderedEquals(<Object?>[1, 2, 3, 4]),
+        reason:
+            'Both original rows and both appended rows must remain present.',
+      );
     },
   );
 }

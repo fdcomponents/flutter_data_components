@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/grid/widgets/fdc_grid_toolbar_search.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 class _SearchSubmit {
   const _SearchSubmit(this.text, this.mode, this.caseSensitive);
@@ -77,13 +78,13 @@ void main() {
       );
 
       controller.openAndFocus();
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       final searchField = find.byKey(
         const ValueKey('fdc_grid_toolbar_search_field'),
       );
       await tester.enterText(searchField, 'alpha beta');
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(submits, hasLength(1));
       expect(submits.last.text, 'alpha beta');
@@ -93,7 +94,7 @@ void main() {
       harnessKey.currentState!.updateSearchConfig(
         matchMode: FdcSearchMode.allWords,
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(submits, hasLength(2));
       expect(submits.last.text, 'alpha beta');
@@ -101,7 +102,7 @@ void main() {
       expect(submits.last.caseSensitive, isFalse);
 
       harnessKey.currentState!.updateSearchConfig(caseSensitive: true);
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(submits, hasLength(3));
       expect(submits.last.text, 'alpha beta');
@@ -135,7 +136,7 @@ void main() {
     );
 
     controller.openAndFocus();
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     final textField = tester.widget<TextField>(
       find.byKey(const ValueKey('fdc_grid_toolbar_search_field')),

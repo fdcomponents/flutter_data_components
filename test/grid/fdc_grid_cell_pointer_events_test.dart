@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('cell pointer callbacks expose row column value and positions', (
@@ -43,7 +44,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     final alpha = find.text('Alpha').first;
     await tester.tap(alpha);
@@ -66,9 +67,9 @@ void main() {
     tapDownEvents.clear();
 
     await tester.tap(alpha);
-    await tester.pump(const Duration(milliseconds: 40));
+    await tester.pump();
     await tester.tap(alpha);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(tapDownEvents, hasLength(2));
     expect(doubleTapEvents, hasLength(1));

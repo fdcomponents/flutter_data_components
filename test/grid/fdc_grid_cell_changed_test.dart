@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('onCellChanged reports context with old and new values', (
@@ -48,10 +49,10 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.byType(Checkbox).first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(events, <String>['0:1:active:false->true:active']);
   });
@@ -95,10 +96,10 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(find.byType(Checkbox).first);
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(find.textContaining('cell callback failed'), findsOneWidget);

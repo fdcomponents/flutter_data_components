@@ -115,7 +115,8 @@ void main() {
 
 Future<void> _pumpGrid(WidgetTester tester) async {
   await tester.pump();
-  await tester.pump(const Duration(milliseconds: 50));
+  // The grid schedules initialization work in a post-frame callback.
+  await tester.pump();
 }
 
 Future<void> _openSecondaryMenu(WidgetTester tester, Finder finder) async {

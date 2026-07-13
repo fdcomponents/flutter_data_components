@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_data_components/src/grid/managers/fdc_grid_scroll_coordinator.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 FdcDataSet _scrollDataSet() {
   final dataSet = FdcDataSet(
@@ -109,7 +110,7 @@ void main() {
         final dataSet = _scrollDataSet();
 
         await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(find.byType(Scrollbar), findsNWidgets(2));
         expect(find.byType(Scrollable), findsNWidgets(2));
@@ -136,7 +137,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
       coordinator.syncVerticalOffsetFromAttachedPosition();
 
       expect(coordinator.verticalMaxScrollExtent, greaterThan(0));
@@ -177,7 +178,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
         coordinator.syncVerticalOffsetFromAttachedPosition();
 
         expect(coordinator.verticalMaxScrollExtent, greaterThan(0));
@@ -210,7 +211,7 @@ void main() {
           scrollbars: FdcGridScrollbars.vertical,
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.byType(Scrollbar), findsOneWidget);
       expect(find.byType(Scrollable), findsNWidgets(2));
@@ -233,7 +234,7 @@ void main() {
       await tester.pumpWidget(
         _scrollGridHost(dataSet: dataSet, scrollbars: FdcGridScrollbars.none),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.byType(Scrollbar), findsNothing);
       expect(find.byType(Scrollable), findsNWidgets(2));
@@ -242,12 +243,12 @@ void main() {
 
       final scrollableBody = find.text('Center A 00');
       await tester.drag(scrollableBody, const Offset(-120, 0));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
       expect(_scrollableOffset(tester, Axis.horizontal), greaterThan(0));
 
       final bodyCell = find.text('Center B 00');
       await tester.drag(bodyCell, const Offset(0, -80));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
       expect(_scrollableOffset(tester, Axis.vertical), greaterThan(0));
     });
 
@@ -257,7 +258,7 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       final verticalController = tester
           .widgetList<Scrollable>(find.byType(Scrollable))
@@ -289,14 +290,14 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsOneWidget);
       expect(find.text('Right 00'), findsOneWidget);
 
       // x=92 lands in the left-pinned body after the row indicator region.
       await tester.dragFrom(const Offset(92, 160), const Offset(0, -180));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsNothing);
       expect(find.text('Right 00'), findsNothing);
@@ -310,7 +311,7 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsOneWidget);
       expect(find.text('Right 00'), findsOneWidget);
@@ -318,7 +319,7 @@ void main() {
       // x=385 lands in the right-pinned body. The right-pinned region must not
       // own a Scrollable; it feeds the same central vertical coordinator.
       await tester.dragFrom(const Offset(385, 160), const Offset(0, -180));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsNothing);
       expect(find.text('Center A 05'), findsOneWidget);
@@ -331,7 +332,7 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsOneWidget);
       expect(find.text('Center A 00'), findsOneWidget);
@@ -341,7 +342,7 @@ void main() {
       // drag gesture, while pinned regions repaint from the same coordinator
       // vertical offset.
       await tester.dragFrom(const Offset(230, 160), const Offset(0, -180));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsNothing);
       expect(find.text('Center A 05'), findsOneWidget);
@@ -356,14 +357,14 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsOneWidget);
 
       // x=20 lands in the row-indicator body; the indicator itself is not a
       // Scrollable but it feeds the central scroll coordinator.
       await tester.dragFrom(const Offset(20, 160), const Offset(0, -180));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.text('Left 00'), findsNothing);
       expect(find.text('Center A 05'), findsOneWidget);
@@ -376,7 +377,7 @@ void main() {
         final dataSet = _scrollDataSet();
 
         await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.horizontal), 0.0);
 
@@ -386,7 +387,7 @@ void main() {
             scrollDelta: Offset(180, 0),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.horizontal), greaterThan(0.0));
         expect(find.byType(Scrollbar), findsNWidgets(2));
@@ -405,7 +406,7 @@ void main() {
             verticalScrollMode: FdcGridVerticalScrollMode.smooth,
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.vertical), 0.0);
         expect(find.text('Right 00'), findsOneWidget);
@@ -416,7 +417,7 @@ void main() {
             scrollDelta: Offset(0, 180),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.vertical), greaterThan(0.0));
         expect(find.text('Right 00'), findsNothing);
@@ -432,7 +433,7 @@ void main() {
       final dataSet = _scrollDataSet();
 
       await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(_scrollableOffset(tester, Axis.vertical), 0.0);
       expect(find.text('Left 00'), findsOneWidget);
@@ -440,7 +441,7 @@ void main() {
       // The header is intentionally outside _FdcGridBodyScrollInputRegion.
       // Drag input over pinned headers must not act as a body touch scroll.
       await tester.dragFrom(const Offset(92, 20), const Offset(0, -180));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(_scrollableOffset(tester, Axis.vertical), 0.0);
       expect(find.text('Left 00'), findsOneWidget);
@@ -455,7 +456,7 @@ void main() {
         await tester.pumpWidget(
           _scrollGridHost(dataSet: dataSet, rowIndicatorVisible: false),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(tester.takeException(), isNull);
         expect(find.byType(Scrollbar), findsNWidgets(2));
@@ -469,7 +470,7 @@ void main() {
         final dataSet = _scrollDataSet();
 
         await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final scrollables = tester
             .widgetList<Scrollable>(find.byType(Scrollable))
@@ -503,7 +504,7 @@ void main() {
         await tester.pumpWidget(
           _scrollGridHost(dataSet: dataSet, headerFiltersVisible: true),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final filterFinder = find.byType(EditableText).first;
         final beforeOffset = _scrollableOffset(tester, Axis.vertical);
@@ -514,7 +515,7 @@ void main() {
             scrollDelta: const Offset(0, 240),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.vertical), beforeOffset);
         expect(find.text('Left 00'), findsOneWidget);
@@ -527,7 +528,7 @@ void main() {
         final dataSet = _scrollDataSet();
 
         await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final headerFinder = find.text('Center A');
         final beforeOffset = _scrollableOffset(tester, Axis.vertical);
@@ -538,7 +539,7 @@ void main() {
             scrollDelta: const Offset(0, 240),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.vertical), beforeOffset);
         expect(find.text('Left 00'), findsOneWidget);
@@ -553,7 +554,7 @@ void main() {
         await tester.pumpWidget(
           _scrollGridHost(dataSet: dataSet, columnGroupsVisible: true),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final groupFinder = find.text('Center');
         final beforeOffset = _scrollableOffset(tester, Axis.vertical);
@@ -564,7 +565,7 @@ void main() {
             scrollDelta: const Offset(0, 240),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         expect(_scrollableOffset(tester, Axis.vertical), beforeOffset);
         expect(find.text('Left 00'), findsOneWidget);

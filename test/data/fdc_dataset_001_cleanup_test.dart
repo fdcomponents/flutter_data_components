@@ -288,7 +288,6 @@ Future<void> _sortControllerFluentApiSupportsMultiSort() async {
       .apply();
 
   expect(dataSet.sort.items.length, 2);
-  expect(dataSet.sort.items.length, 2);
   expect(dataSet.sort.items.first.fieldName, 'group');
   expect(dataSet.sort.items.first.sortType, FdcSortType.ascending);
   expect(dataSet.sort.items.last.fieldName, 'name');

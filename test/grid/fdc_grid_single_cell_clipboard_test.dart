@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,13 +28,13 @@ void main() {
     final dataSet = _dataSet();
 
     await tester.pumpWidget(_host(dataSet));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.text('Alpha').first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await _sendShortcut(tester, LogicalKeyboardKey.keyC);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(clipboard.text, 'Alpha');
   });
@@ -45,13 +46,13 @@ void main() {
       clipboard.text = 'Gamma';
 
       await tester.pumpWidget(_host(dataSet));
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(find.text('Alpha').first);
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await _sendShortcut(tester, LogicalKeyboardKey.keyV);
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(dataSet['name'], 'Gamma');
       expect(find.text('Gamma'), findsOneWidget);

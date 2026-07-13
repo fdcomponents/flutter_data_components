@@ -16,7 +16,7 @@ void main() {
     expect(dataSet['name'], 'Alpha');
   });
 
-  test('loadRows opens an adapter-less local dataset', () async {
+  test('loadRows awaits future rows before opening a local dataset', () async {
     final dataSet = _createLocalDataSet();
 
     await dataSet.loadRows(

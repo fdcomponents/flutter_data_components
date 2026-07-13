@@ -8,6 +8,7 @@ import 'package:flutter_data_components/src/grid/filtering/fdc_header_filter_val
 import 'package:flutter_data_components/src/grid/format/fdc_field_value_codec.dart';
 import 'package:flutter_data_components/src/grid/models/fdc_column_identity.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   test('numeric column affixes are display-only for codec formatting', () {
@@ -153,7 +154,7 @@ void main() {
 
       final labels = resolver.resolve(column).map((option) => option.label);
 
-      expect(labels, containsAll(<String>['5', '8']));
+      expect(labels, unorderedEquals(<String>['5', '8']));
       expect(labels, isNot(contains('~5 pcs')));
       expect(labels, isNot(contains('~8 pcs')));
     },
@@ -194,14 +195,14 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(find.text('~5 pcs'), findsOneWidget);
 
     await tester.tap(find.text('~5 pcs'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f2);
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     final editableText = tester.widget<EditableText>(
       find.byType(EditableText).last,

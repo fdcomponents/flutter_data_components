@@ -31,7 +31,10 @@ void main() {
       onWorkCompleted: (_, work) => completed.add(work),
 
       adapter: FdcMemoryDataAdapter(rows: source.toMaps()),
-    )..open();
+    );
+    await dataSet.open();
+    started.clear();
+    completed.clear();
 
     dataSet.work.addListener(() {
       phases.add(dataSet.work.phase);
@@ -49,12 +52,16 @@ void main() {
     expect(phases, contains(FdcDataSetWorkPhase.filter));
     expect(phases.last, FdcDataSetWorkPhase.idle);
     expect(
-      started.map((work) => work.phase),
-      contains(FdcDataSetWorkPhase.filter),
+      started.map((work) => work.phase).toList(),
+      const <FdcDataSetWorkPhase>[FdcDataSetWorkPhase.filter],
+      reason:
+          'A single filter operation must publish exactly one start callback.',
     );
     expect(
-      completed.map((work) => work.phase),
-      contains(FdcDataSetWorkPhase.filter),
+      completed.map((work) => work.phase).toList(),
+      const <FdcDataSetWorkPhase>[FdcDataSetWorkPhase.filter],
+      reason:
+          'A single filter operation must publish exactly one completion callback.',
     );
     expect(dataSet.work.isWorking, isFalse);
     expect(dataSet.recordCount, 10000);
@@ -162,13 +169,16 @@ void main() {
       onWorkStarted: (_, work) => started.add(work),
 
       adapter: FdcMemoryDataAdapter(rows: dataSet.toMaps()),
-    )..open();
+    );
+    await observed.open();
+    started.clear();
 
     await observed.search.apply('20');
 
     expect(
-      started.map((work) => work.phase),
-      contains(FdcDataSetWorkPhase.search),
+      started.map((work) => work.phase).toList(),
+      const <FdcDataSetWorkPhase>[FdcDataSetWorkPhase.search],
+      reason: 'A single search must publish exactly one search start callback.',
     );
     expect(started.last.mode, FdcDataSetWorkMode.determinate);
     expect(observed.work.isWorking, isFalse);

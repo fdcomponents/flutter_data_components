@@ -4,6 +4,7 @@ import 'package:flutter_data_components/src/common/menu/fdc_menu_entry.dart';
 import 'package:flutter_data_components/src/common/menu/fdc_menu_overlay.dart';
 import 'package:flutter_data_components/src/common/menu/fdc_menu_renderer.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('checked menu action shows a leading checkmark', (tester) async {
@@ -34,7 +35,7 @@ void main() {
     await tester.tapAt(
       tester.getCenter(find.byKey(const ValueKey<String>('menu-anchor'))),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(find.byIcon(Icons.check), findsOneWidget);
     expect(find.text('★★★★☆'), findsOneWidget);
@@ -70,7 +71,7 @@ void main() {
     await tester.tapAt(
       tester.getCenter(find.byKey(const ValueKey<String>('title-menu-anchor'))),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     final title = tester.widget<Text>(find.text('Filters'));
     expect(title.style?.fontWeight, FontWeight.w600);
@@ -156,11 +157,11 @@ void main() {
         find.byKey(const ValueKey<String>('dismiss-menu-anchor')),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(find.text('Dismissible action'), findsOneWidget);
 
     FdcMenuOverlay.dismissAll();
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(find.text('Dismissible action'), findsNothing);
   });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   testWidgets('combo edit does not open dropdown on enter while focused', (
@@ -41,7 +42,7 @@ void main() {
     expect(find.text('Closed'), findsNothing);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(find.text('Open'), findsOneWidget);
     expect(find.text('Closed'), findsNothing);
@@ -89,7 +90,7 @@ void main() {
     expect(nextFocusNode.hasFocus, isFalse);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(nextFocusNode.hasFocus, isTrue);
     expect(find.text('Closed'), findsNothing);

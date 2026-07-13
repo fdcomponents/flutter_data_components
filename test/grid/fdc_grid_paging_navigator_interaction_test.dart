@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 FdcDataSet _dataSet() => FdcDataSet(
   fields: const <FdcFieldDef>[FdcIntegerField(name: 'id')],
@@ -32,21 +33,21 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byTooltip('Next page'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.paging.pageIndex, 1);
     expect(dataSet['id'], 11);
 
     await tester.tap(find.byTooltip('Last page'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.paging.pageIndex, 2);
     expect(dataSet['id'], 21);
 
     await tester.tap(find.byTooltip('Previous page'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.paging.pageIndex, 1);
 
     await tester.tap(find.byTooltip('First page'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     expect(dataSet.paging.pageIndex, 0);
   });
 
@@ -71,7 +72,7 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), '99');
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.paging.pageIndex, 2);
     expect(dataSet['id'], 21);
@@ -98,9 +99,9 @@ void main() {
     );
 
     await tester.tap(find.text('10'));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
     await tester.tap(find.text('20').last);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.paging.pageSize, 20);
     expect(dataSet.paging.pageIndex, 0);

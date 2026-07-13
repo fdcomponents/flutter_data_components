@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 FdcDataSet _booleanDataSet() {
   final dataSet = FdcDataSet(
@@ -83,10 +84,10 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.byType(Checkbox).first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(events, <String>[
       'column:0:1:active:false->true:active',
@@ -160,17 +161,31 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.byKey(const ValueKey<String>('scan-status')));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(dataSet.fieldValue('status'), 'ART-001');
     expect(dataSet.fieldValue('name'), 'Lookup article');
-    expect(events, contains('statusChanged:Active->ART-001'));
-    expect(events, contains('grid:status:Active->ART-001'));
-    expect(events, contains('grid:name:Alpha->Lookup article'));
-    expect(events.where((event) => event.startsWith('nameChanged')), isEmpty);
+    expect(
+      events,
+      unorderedEquals(<String>[
+        'grid:name:Alpha->Lookup article',
+        'statusChanged:Active->ART-001',
+        'grid:status:Active->ART-001',
+      ]),
+      reason:
+          'The additional name write must notify only the grid, while the '
+          'status edit must emit exactly one column callback and one grid callback.',
+    );
+    expect(
+      events.where((event) => event.contains('status')).toList(),
+      <String>['statusChanged:Active->ART-001', 'grid:status:Active->ART-001'],
+      reason:
+          'The edited status column must notify its column callback before '
+          'the grid callback, regardless of when the independent name write is reported.',
+    );
   });
 
   testWidgets(
@@ -216,7 +231,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('invalid-additional-write')),

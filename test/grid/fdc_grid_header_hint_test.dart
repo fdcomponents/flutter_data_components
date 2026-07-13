@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   group('FdcGrid header hints', () {
@@ -44,7 +45,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       expect(find.byTooltip('Customer display name'), findsOneWidget);
       expect(find.byTooltip('Status'), findsNothing);

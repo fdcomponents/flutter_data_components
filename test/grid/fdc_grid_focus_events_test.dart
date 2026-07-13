@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 FdcDataSet _peopleDataSet() {
   final dataSet = FdcDataSet(
@@ -65,10 +66,10 @@ void main() {
     final dataSet = _peopleDataSet();
 
     await tester.pumpWidget(_host(dataSet: dataSet, events: events));
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     await tester.tap(find.text('Alpha').first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(events, <String>[
       'rowEnter:0',
@@ -78,7 +79,7 @@ void main() {
 
     events.clear();
     await tester.tap(find.text('1').first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(events, <String>[
       'cellExit:name:0:mouse',
@@ -89,7 +90,7 @@ void main() {
 
     events.clear();
     await tester.tap(find.text('2').first);
-    await tester.pumpAndSettle();
+    await pumpPendingFrames(tester);
 
     expect(events, <String>[
       'cellExit:id:0:mouse',

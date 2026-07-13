@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_data_components/fdc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/fdc_widget_test_pumps.dart';
 
 void main() {
   group('FdcGrid column horizontal alignment', () {
@@ -43,7 +44,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       final text = tester.widget<Text>(find.text('Alpha'));
       expect(text.textAlign, TextAlign.center);
@@ -97,7 +98,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final label = tester.widget<Text>(find.text('End header'));
         expect(label.textAlign, TextAlign.end);
@@ -161,7 +162,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpPendingFrames(tester);
 
         final labelLeft = tester.getTopLeft(find.text('End sorted')).dx;
 
@@ -220,12 +221,12 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(find.text('Alpha'));
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.f2);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final editor = tester.widget<EditableText>(find.byType(EditableText));
       expect(editor.textAlign, TextAlign.left);
@@ -269,12 +270,12 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(find.text('12'));
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.f2);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final editor = tester.widget<EditableText>(find.byType(EditableText));
       expect(editor.textAlign, TextAlign.right);
@@ -320,12 +321,12 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await pumpPendingFrames(tester);
 
       await tester.tap(find.text('12.34'));
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.f2);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       final editor = tester.widget<EditableText>(find.byType(EditableText));
       expect(editor.textAlign, TextAlign.right);
