@@ -238,6 +238,8 @@ class FdcGridRangeSelectionOverlayContext {
     required this.borderColor,
     required this.backgroundColor,
     required this.borderThickness,
+    required this.showSelectionHandle,
+    required this.selectionHandleSize,
   });
 
   /// Normalized selected row and column bounds.
@@ -271,6 +273,12 @@ class FdcGridRangeSelectionOverlayContext {
 
   /// Positive outline thickness requested by the feature, in logical pixels.
   final double borderThickness;
+
+  /// Whether the resize handle is painted at the normalized bottom-right corner.
+  final bool showSelectionHandle;
+
+  /// Visible selection-handle size in logical pixels.
+  final double selectionHandleSize;
 }
 
 /// Mutable runtime state contract for range selection attached to one grid
@@ -479,6 +487,16 @@ abstract class FdcGridRangeSelectionSession {
     required FdcGridCellRef? selectedCell,
   });
 
+  /// Starts resizing the retained range from its bottom-right selection handle.
+  ///
+  /// The normalized [anchor] remains fixed while pointer updates move the
+  /// current extent. Returns `false` when range selection is unavailable.
+  bool startSelectionHandleDrag({
+    required bool enabled,
+    required FdcGridCellRef anchor,
+    required FdcGridCellRef extent,
+  });
+
   /// Extends an active pointer drag to [target], returning whether state changed.
   bool updatePointerDrag(FdcGridCellRef target);
 
@@ -642,6 +660,13 @@ class _FdcGridNoopRangeSelectionSession extends FdcGridRangeSelectionSession {
   }) => false;
 
   @override
+  bool startSelectionHandleDrag({
+    required bool enabled,
+    required FdcGridCellRef anchor,
+    required FdcGridCellRef extent,
+  }) => false;
+
+  @override
   bool updatePointerDrag(FdcGridCellRef target) => false;
 
   @override
@@ -736,6 +761,12 @@ abstract class FdcGridRangeSelectionFeature {
   ///
   /// Extension implementations must return a positive value.
   double resolveBorderThickness(FdcGridRangeSelectionHost host);
+
+  /// Resolves whether the selection resize handle is visible.
+  bool resolveShowSelectionHandle(FdcGridRangeSelectionHost host) => false;
+
+  /// Resolves the visible selection resize-handle size.
+  double resolveSelectionHandleSize(FdcGridRangeSelectionHost host) => 0.0;
 
   /// Creates mutable runtime state for one grid attachment.
   FdcGridRangeSelectionSession createSession(FdcGridRangeSelectionHost host) {

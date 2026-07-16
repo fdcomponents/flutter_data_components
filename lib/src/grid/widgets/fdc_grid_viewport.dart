@@ -15,6 +15,7 @@ import 'package:flutter/scheduler.dart' show SchedulerBinding, SchedulerPhase;
 
 import '../../common/menu/fdc_menu_entry.dart';
 import '../../common/menu/fdc_menu_renderer.dart';
+import '../core/fdc_grid_interaction_tokens.dart';
 import '../core/fdc_grid_runtime_constants.dart';
 import '../managers/fdc_grid_scroll_coordinator.dart';
 import '../models/fdc_grid_internal_models.dart';
@@ -170,6 +171,7 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
   ({int rowIndex, int columnIndex})? _rangeContextMenuCell;
   OverlayEntry? _rangeContextMenuOverlay;
   Timer? _autoScrollTimer;
+  bool _selectionHandleHovered = false;
 
   FdcGridViewportModel get model => widget.model;
   FdcGridViewportCallbacks get callbacks => widget.callbacks;
@@ -184,7 +186,8 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
   @override
   void didUpdateWidget(covariant FdcGridViewport oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (model.selectedRangeBounds == null) {
+    if (_rangeContextMenuOverlay != null &&
+        !_canOpenRangeSelectionContextMenu()) {
       _hideRangeContextMenu();
     }
   }
@@ -192,9 +195,15 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: _selectionHandleHovered
+          ? SystemMouseCursors.precise
+          : MouseCursor.defer,
       onEnter: _handlePointerEnter,
       onHover: _handlePointerHover,
-      onExit: (_) => callbacks.onRangePointerCellChanged(null, null),
+      onExit: (_) {
+        _setSelectionHandleHovered(false);
+        callbacks.onRangePointerCellChanged(null, null);
+      },
       child: Listener(
         behavior: HitTestBehavior.opaque,
         onPointerHover: _handlePointerHover,
@@ -259,11 +268,18 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
   }
 
   void _handlePointerEnter(PointerEnterEvent event) {
+    _setSelectionHandleHovered(_isSelectionHandleHit(event.localPosition));
     _publishPointerCell(event.localPosition);
   }
 
   void _handlePointerHover(PointerHoverEvent event) {
+    _setSelectionHandleHovered(_isSelectionHandleHit(event.localPosition));
     _publishPointerCell(event.localPosition);
+  }
+
+  void _setSelectionHandleHovered(bool value) {
+    if (_selectionHandleHovered == value || !mounted) return;
+    setState(() => _selectionHandleHovered = value);
   }
 
   void _publishPointerCell(Offset localPosition) {
@@ -279,6 +295,14 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
       _showRangeContextMenu(event.position);
     }
     if (!primaryPressed) return;
+    if (_isSelectionHandleHit(event.localPosition)) {
+      _hideRangeContextMenu();
+      _rangeDragging = true;
+      _lastPointerGlobalPosition = event.position;
+      callbacks.onRangeHandleDragStart();
+      _startAutoScrollTimer();
+      return;
+    }
     if (!model.rangeSelectionModifierActive) {
       if (model.selectedRangeBounds != null) {
         // The range overlay is modal. The first click only dismisses it and is
@@ -296,18 +320,78 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
     _startAutoScrollTimer();
   }
 
+  bool _isSelectionHandleHit(Offset localPosition) {
+    final rect = _selectionHandleHitRect();
+    return rect != null && rect.contains(localPosition);
+  }
+
+  Rect? _selectionHandleHitRect() {
+    final bounds = model.selectedRangeBounds;
+    if (bounds == null ||
+        !model.rangeSelectionShowHandle ||
+        model.rangeSelectionHandleSize <= 0) {
+      return null;
+    }
+    final viewportWidth = context.size?.width ?? model.paintedGridWidth;
+    final rowIndicatorWidth = model.layoutRegions.rowIndicatorWidth;
+    final left = model.columnBandLayouts.pinnedLeft;
+    final center = model.columnBandLayouts.scrollable;
+    final right = model.columnBandLayouts.pinnedRight;
+    final centerOrigin = rowIndicatorWidth + left.width;
+    final rightOrigin = math.max(centerOrigin, viewportWidth - right.width);
+
+    double? cornerX;
+    for (final entry in <(FdcGridColumnBandLayout, double, double)>[
+      (left, rowIndicatorWidth, 0),
+      (center, centerOrigin, model.scrollCoordinator.liveHorizontalOffset),
+      (right, rightOrigin, 0),
+    ]) {
+      final geometry = entry.$1.geometries.where(
+        (item) => item.sourceColumnIndex == bounds.lastColumn,
+      );
+      if (geometry.isEmpty) continue;
+      final item = geometry.first;
+      final candidate = entry.$2 + item.offset + item.width - entry.$3;
+      final clipLeft = entry.$2;
+      final clipRight = entry.$2 + entry.$1.width;
+      if (candidate >= clipLeft && candidate <= clipRight) {
+        cornerX = candidate;
+        break;
+      }
+    }
+    if (cornerX == null) return null;
+
+    final bodyTop = model.topInset + model.effectiveHeaderHeight;
+    final cornerY =
+        bodyTop +
+        model.rowTopAt(bounds.lastRow) +
+        model.rowHeight -
+        model.scrollCoordinator.liveVerticalOffset;
+    final hitSize = math.max(14.0, model.rangeSelectionHandleSize);
+    return Rect.fromCenter(
+      center: Offset(cornerX, cornerY),
+      width: hitSize,
+      height: hitSize,
+    );
+  }
+
   bool _updateRangeContextMenuTarget(
     PointerDownEvent event,
     bool secondaryPressed,
   ) {
     _rangeContextMenuCell = null;
-    if (!secondaryPressed ||
-        model.rangeSelectionContextMenuBuilder == null ||
-        model.selectedRangeBounds == null) {
+    if (!secondaryPressed || model.rangeSelectionContextMenuBuilder == null) {
       return false;
     }
     final cell = _cellAt(event.localPosition, clampToBody: false);
-    if (!_rangeSelectionContainsCell(cell)) {
+    if (cell == null) {
+      return false;
+    }
+    final bounds = model.selectedRangeBounds;
+    final allowed = bounds != null
+        ? _rangeSelectionContainsCell(cell)
+        : model.isSelectedCell(cell.rowIndex, cell.columnIndex);
+    if (!allowed) {
       return false;
     }
     _rangeContextMenuCell = cell;
@@ -337,8 +421,13 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
   }
 
   bool _canOpenRangeSelectionContextMenu() {
-    return model.rangeSelectionContextMenuBuilder != null &&
-        _rangeSelectionContainsCell(_rangeContextMenuCell);
+    final cell = _rangeContextMenuCell;
+    if (model.rangeSelectionContextMenuBuilder == null || cell == null) {
+      return false;
+    }
+    return model.selectedRangeBounds != null
+        ? _rangeSelectionContainsCell(cell)
+        : model.isSelectedCell(cell.rowIndex, cell.columnIndex);
   }
 
   void _showRangeContextMenu(Offset globalPosition) {
@@ -362,24 +451,25 @@ class _FdcGridViewportState extends State<FdcGridViewport> {
         return Stack(
           children: [
             Positioned.fill(
-              child: Listener(
+              child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
-                onPointerDown: (event) {
-                  final primaryPressed =
-                      (event.buttons & kPrimaryMouseButton) != 0;
+                onTap: () {
                   _hideRangeContextMenu();
-                  if (primaryPressed &&
-                      model.selectedRangeBounds != null &&
+                  if (model.selectedRangeBounds != null &&
                       !model.rangeSelectionModifierActive) {
                     callbacks.onRangeOverlayDismiss();
                   }
                 },
+                onSecondaryTap: _hideRangeContextMenu,
               ),
             ),
             Positioned(
               left: menuPosition.dx,
               top: menuPosition.dy,
-              child: FdcMenuPanel(entries: entries),
+              child: TapRegion(
+                groupId: fdcGridTapRegionGroup,
+                child: FdcMenuPanel(entries: entries),
+              ),
             ),
           ],
         );
@@ -1518,6 +1608,8 @@ class _FdcGridRangeSelectionOverlay extends StatelessWidget {
             borderColor: color,
             backgroundColor: model.rangeBackgroundColor,
             borderThickness: thickness,
+            showSelectionHandle: model.rangeSelectionShowHandle,
+            selectionHandleSize: model.rangeSelectionHandleSize,
           );
           return overlayBuilder(context, overlayContext);
         },

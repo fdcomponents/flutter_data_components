@@ -24,6 +24,15 @@ extension _FdcGridRangeSelectionRuntime on _FdcGridState {
 
   bool get _rangeSelectionEnabled => _rangeSelectionConfigured;
 
+  bool get _rangeSelectionShowHandle =>
+      _rangeSelectionEnabled &&
+      (widget.rangeSelection?.resolveShowSelectionHandle(_rangeSelectionHost) ??
+          false);
+
+  double get _rangeSelectionHandleSize =>
+      widget.rangeSelection?.resolveSelectionHandleSize(_rangeSelectionHost) ??
+      0.0;
+
   bool get _hasExplicitCellRange => _rangeSelectionSession.hasExplicitCellRange;
 
   void _attachGridRangeSelectionFeature() {
@@ -184,6 +193,27 @@ extension _FdcGridRangeSelectionRuntime on _FdcGridState {
       );
     });
     if (!started) return;
+    // Range dragging is owned by the viewport Listener while nested cells are
+    // absorbed. Explicitly focus the grid so clipboard shortcuts remain
+    // available after a range is created directly with Shift+drag.
+    _focusGridForSelectedCell();
+  }
+
+  void _startCellRangeFromSelectionHandle() {
+    final bounds = _selectedRangeBounds();
+    if (bounds == null) return;
+    final anchor = _cellRef(bounds.firstRow, bounds.firstColumn);
+    final extent = _cellRef(bounds.lastRow, bounds.lastColumn);
+    var started = false;
+    _setGridState(() {
+      started = _rangeSelectionSession.startSelectionHandleDrag(
+        enabled: _rangeSelectionEnabled,
+        anchor: anchor,
+        extent: extent,
+      );
+    });
+    if (!started) return;
+    _focusGridForSelectedCell();
   }
 
   void _updateCellRangeFromPointer(int rowIndex, int columnIndex) {

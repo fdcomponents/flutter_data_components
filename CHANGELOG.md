@@ -1,3 +1,9 @@
+## 1.0.6
+
+- Changed column reordering to swap columns live while dragging over valid targets, with animated transitions and guarded repeat swaps for stable visual feedback.
+- Fixed Copy and Paste actions in the selected-cell context menu when the inplace editor is not active.
+- Added regression coverage for menu-driven single-cell clipboard operations.
+
 ## 1.0.5
 
 - Added shared menu-overlay dismissal support for embedded Flutter Web applications.

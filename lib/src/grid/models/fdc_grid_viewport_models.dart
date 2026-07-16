@@ -76,11 +76,14 @@ class FdcGridViewportModel {
     required this.selectedRangeBounds,
     required this.rangeOutlineStyle,
     required this.rangeBackgroundColor,
+    required this.rangeSelectionShowHandle,
+    required this.rangeSelectionHandleSize,
     required this.rangeSelectionModifierActive,
     required this.rangeSelectionCopyEnabled,
     required this.rangeSelectionPasteEnabled,
     required this.rangeSelectionContextMenuBuilder,
     required this.rangeSelectionContainsCell,
+    required this.isSelectedCell,
     required this.rangeSelectionOverlayBuilder,
   });
 
@@ -198,6 +201,8 @@ class FdcGridViewportModel {
   selectedRangeBounds;
   final FdcGridResolvedCellIndicatorStyle? rangeOutlineStyle;
   final Color? rangeBackgroundColor;
+  final bool rangeSelectionShowHandle;
+  final double rangeSelectionHandleSize;
   final bool rangeSelectionModifierActive;
   final bool rangeSelectionCopyEnabled;
   final bool rangeSelectionPasteEnabled;
@@ -205,6 +210,7 @@ class FdcGridViewportModel {
   rangeSelectionContextMenuBuilder;
   final bool Function(int rowIndex, int columnIndex)?
   rangeSelectionContainsCell;
+  final bool Function(int rowIndex, int columnIndex) isSelectedCell;
   final FdcGridRangeSelectionOverlayBuilder? rangeSelectionOverlayBuilder;
 
   /// Resolves detached vertical bands from metrics already confirmed by the
@@ -267,6 +273,7 @@ class FdcGridViewportCallbacks {
     required this.onPointerSignal,
     required this.onRangePointerCellChanged,
     required this.onRangeDragStart,
+    required this.onRangeHandleDragStart,
     required this.onRangeDragUpdate,
     required this.onRangeDragEnd,
     required this.onRangeOverlayDismiss,
@@ -298,6 +305,7 @@ class FdcGridViewportCallbacks {
   final void Function(int? rowIndex, int? columnIndex)
   onRangePointerCellChanged;
   final void Function(int rowIndex, int columnIndex) onRangeDragStart;
+  final void Function() onRangeHandleDragStart;
   final void Function(int rowIndex, int columnIndex) onRangeDragUpdate;
   final void Function() onRangeDragEnd;
   final void Function() onRangeOverlayDismiss;

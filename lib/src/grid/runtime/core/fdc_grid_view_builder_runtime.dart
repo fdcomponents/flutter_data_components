@@ -10,6 +10,7 @@ extension _FdcGridStateViewBuilders on _FdcGridState {
       onPointerSignal: _handlePointerSignal,
       onRangePointerCellChanged: _updateRangePointerHoverCell,
       onRangeDragStart: _startCellRangeFromPointer,
+      onRangeHandleDragStart: _startCellRangeFromSelectionHandle,
       onRangeDragUpdate: _updateCellRangeFromPointer,
       onRangeDragEnd: _endCellRangePointerDrag,
       onRangeOverlayDismiss: () => _clearCellRange(),
@@ -54,7 +55,7 @@ extension _FdcGridStateViewBuilders on _FdcGridState {
     final horizontalGridLineColor = _styles.horizontalGridLineColor(_gridStyle);
     final verticalGridLineColor = _styles.verticalGridLineColor(_gridStyle);
 
-    return FdcGridViewport(
+    final viewport = FdcGridViewport(
       model: FdcGridViewportModel(
         columnBandLayouts: columnBandLayouts,
         valueFormatter: valueFormatter,
@@ -116,6 +117,12 @@ extension _FdcGridStateViewBuilders on _FdcGridState {
         rangeSelectionContainsCell: _rangeSelectionEnabled
             ? _rangeSelectionContainsCell
             : null,
+        isSelectedCell: (rowIndex, columnIndex) {
+          final selected = _selectedCell;
+          return selected != null &&
+              selected.rowIndex == rowIndex &&
+              selected.columnIndex == columnIndex;
+        },
         rangeSelectionOverlayBuilder: _rangeSelectionEnabled
             ? _rangeSelectionSession.buildOverlay
             : null,
@@ -132,9 +139,107 @@ extension _FdcGridStateViewBuilders on _FdcGridState {
         rangeBackgroundColor: _rangeSelectionEnabled
             ? widget.rangeSelection!.resolveBackgroundColor(_rangeSelectionHost)
             : null,
+        rangeSelectionShowHandle: _rangeSelectionShowHandle,
+        rangeSelectionHandleSize: _rangeSelectionHandleSize,
       ),
       callbacks: _viewportCallbacks,
     );
+
+    if (!widget.options.allowColumnReordering) {
+      return viewport;
+    }
+
+    late BuildContext dragTargetContext;
+    return DragTarget<int>(
+      key: const ValueKey<String>('fdc-grid-column-reorder-viewport-target'),
+      onWillAcceptWithDetails: (_) => _draggingColumnIndex != null,
+      onMove: (details) {
+        final renderBox = dragTargetContext.findRenderObject();
+        if (renderBox is! RenderBox || !renderBox.hasSize) {
+          return;
+        }
+
+        final localPosition = renderBox.globalToLocal(details.offset);
+        final targetColumnIndex = _columnDragTargetAtViewportX(
+          localPosition.dx,
+          columnBandLayouts: columnBandLayouts,
+          layoutRegions: layoutRegions,
+          paintedGridWidth: paintedGridWidth,
+        );
+        final sourceColumnIndex = _draggingColumnIndex ?? details.data;
+        if (targetColumnIndex == null) {
+          _headerCallbacks.onColumnDragInvalidTargetHoverChanged(true);
+          return;
+        }
+
+        final sameSourceTarget = sourceColumnIndex == targetColumnIndex;
+        if (sameSourceTarget) {
+          _headerCallbacks.onColumnDragInvalidTargetHoverChanged(false);
+          _headerCallbacks.onColumnDragHoverTarget(targetColumnIndex);
+          return;
+        }
+
+        final canMove =
+            _resizingRuntimeColumnId == null &&
+            _headerCallbacks.canMoveColumn(
+              sourceColumnIndex,
+              targetColumnIndex,
+            );
+        _headerCallbacks.onColumnDragInvalidTargetHoverChanged(!canMove);
+        if (canMove) {
+          _headerCallbacks.onColumnDragHoverTarget(targetColumnIndex);
+        }
+      },
+      onAcceptWithDetails: (_) =>
+          _headerCallbacks.onColumnDragInvalidTargetHoverChanged(false),
+      onLeave: (_) =>
+          _headerCallbacks.onColumnDragInvalidTargetHoverChanged(false),
+      builder: (context, candidateData, rejectedData) {
+        dragTargetContext = context;
+        return viewport;
+      },
+    );
+  }
+
+  int? _columnDragTargetAtViewportX(
+    double viewportX, {
+    required FdcGridColumnBandLayouts columnBandLayouts,
+    required FdcGridLayoutRegions layoutRegions,
+    required double paintedGridWidth,
+  }) {
+    final dataX = viewportX - layoutRegions.rowIndicatorWidth;
+    if (dataX < 0) {
+      return null;
+    }
+
+    final pinnedLeft = columnBandLayouts.pinnedLeft;
+    if (dataX < pinnedLeft.width) {
+      return _columnIndexAtBandX(pinnedLeft, dataX);
+    }
+
+    final pinnedRight = columnBandLayouts.pinnedRight;
+    final pinnedRightStart = paintedGridWidth - pinnedRight.width;
+    if (pinnedRight.isNotEmpty && viewportX >= pinnedRightStart) {
+      return _columnIndexAtBandX(pinnedRight, viewportX - pinnedRightStart);
+    }
+
+    final scrollableX =
+        dataX - pinnedLeft.width + _scrollCoordinator.liveHorizontalOffset;
+    return _columnIndexAtBandX(columnBandLayouts.scrollable, scrollableX);
+  }
+
+  int? _columnIndexAtBandX(FdcGridColumnBandLayout layout, double localX) {
+    if (localX < 0 || localX >= layout.width) {
+      return null;
+    }
+    for (var index = 0; index < layout.length; index++) {
+      final left = layout.columnOffsets[index];
+      final right = left + layout.columnWidths[index];
+      if (localX >= left && localX < right) {
+        return layout.columnIndexes[index];
+      }
+    }
+    return null;
   }
 
   double _resolveNonNegativeGridLineInset(double? value) {

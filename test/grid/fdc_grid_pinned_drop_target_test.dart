@@ -54,6 +54,16 @@ void main() {
     );
     await pumpPendingFrames(tester);
 
-    expect(find.byType(DragTarget<int>), findsNWidgets(4));
+    const viewportTargetKey = ValueKey<String>(
+      'fdc-grid-column-reorder-viewport-target',
+    );
+    expect(find.byKey(viewportTargetKey), findsOneWidget);
+
+    final allTargets = find.byType(DragTarget<int>);
+    expect(allTargets, findsNWidgets(5));
+    expect(
+      find.descendant(of: find.byType(FdcGrid), matching: allTargets),
+      findsNWidgets(5),
+    );
   });
 }

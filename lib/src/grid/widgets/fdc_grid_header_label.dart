@@ -283,7 +283,6 @@ class FdcGridHeaderLabelState extends State<FdcGridHeaderLabel> {
 
     return LongPressDraggable<int>(
       data: widget.columnIndex,
-      axis: Axis.horizontal,
       dragAnchorStrategy: pointerDragAnchorStrategy,
       onDragStarted: () =>
           widget.callbacks.onColumnDragStarted(widget.columnIndex),

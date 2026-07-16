@@ -198,7 +198,7 @@ class _DateInputPattern {
   }
 
   static String? _tokenAt(String value, int index) {
-    for (final token in const ['yyyy', 'MM', 'dd', 'HH', 'mm']) {
+    for (final token in const ['yyyy', 'MM', 'dd', 'HH', 'mm', 'ss']) {
       if (value.startsWith(token, index)) {
         return token;
       }

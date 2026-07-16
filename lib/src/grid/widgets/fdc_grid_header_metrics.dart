@@ -67,7 +67,7 @@ class FdcGridHeaderMetrics {
 
   static const double columnDragFeedbackWidth = 180;
   static const double columnDragFeedbackHeight = 36;
-  static const Offset columnDragFeedbackOffset = Offset(12, -46);
+  static const Offset columnDragFeedbackOffset = Offset.zero;
 
   static const double sortIconGap = 3;
   static const double sortIconSize = 13;
