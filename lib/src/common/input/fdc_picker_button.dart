@@ -30,21 +30,46 @@ class FdcPickerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = IconButton(
-      onPressed: onPressed,
-      icon: Icon(Icons.calendar_today_outlined, color: iconColor),
-      iconSize: compact ? compactIconSize ?? 18 : null,
-      constraints: compact
-          ? BoxConstraints.tightFor(
-              width: compactSize ?? 32,
-              height: compactSize ?? 32,
-            )
-          : null,
-      splashRadius: compact ? compactSplashRadius ?? 16 : null,
-      padding: compact ? EdgeInsets.zero : null,
-      tooltip: tooltip ?? FdcApp.translationsOf(context).common.pickDate,
-    );
+    if (!compact) {
+      return ExcludeFocus(
+        child: IconButton(
+          onPressed: onPressed,
+          icon: Icon(Icons.calendar_today_outlined, color: iconColor),
+          tooltip: tooltip ?? FdcApp.translationsOf(context).common.pickDate,
+        ),
+      );
+    }
 
-    return ExcludeFocus(child: button);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        final resolvedSize =
+            compactSize ??
+            (availableHeight.isFinite
+                ? (availableHeight - 4).clamp(20.0, 32.0).toDouble()
+                : 32.0);
+        final resolvedIconSize =
+            compactIconSize ??
+            (resolvedSize * 0.5625).clamp(14.0, 18.0).toDouble();
+        final resolvedSplashRadius =
+            compactSplashRadius ??
+            (resolvedSize / 2).clamp(10.0, 16.0).toDouble();
+
+        return ExcludeFocus(
+          child: IconButton(
+            onPressed: onPressed,
+            icon: Icon(Icons.calendar_today_outlined, color: iconColor),
+            iconSize: resolvedIconSize,
+            constraints: BoxConstraints.tightFor(
+              width: resolvedSize,
+              height: resolvedSize,
+            ),
+            splashRadius: resolvedSplashRadius,
+            padding: EdgeInsets.zero,
+            tooltip: tooltip ?? FdcApp.translationsOf(context).common.pickDate,
+          ),
+        );
+      },
+    );
   }
 }

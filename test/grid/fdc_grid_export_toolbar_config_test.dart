@@ -68,6 +68,27 @@ void main() {
     );
   });
 
+  test('null export formats include every registered format', () {
+    const button = FdcGridExportButton();
+
+    expect(button.formats, isNull);
+    expect(button.effectiveFormats, FdcExportRegistry.formats);
+  });
+
+  test('configured export formats restrict the effective list', () {
+    const button = FdcGridExportButton(
+      formats: <FdcExportFormat>[FdcExportFormat.csv, FdcExportFormat.csv],
+    );
+
+    expect(button.effectiveFormats, <FdcExportFormat>[FdcExportFormat.csv]);
+  });
+
+  test('empty export formats disable the export item', () {
+    const button = FdcGridExportButton(formats: <FdcExportFormat>[]);
+
+    expect(button.effectiveFormats, isEmpty);
+  });
+
   test('FdcGridExportButton passes visible grid columns to export options', () {
     const columns = <FdcExportColumn>[
       FdcExportColumn(fieldName: 'name', key: 'Name', label: 'Name'),

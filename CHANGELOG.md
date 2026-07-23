@@ -1,3 +1,10 @@
+## 1.0.7
+
+- Kept clear-all sorting and unpin-all columns within their respective Sorting and Pinning groups when building smart column menus.
+- Simplified column menus by exposing sorting or pinning actions directly when that is the only available action group.
+- Added built-in grid export format selection: omit `formats` to include every registered format, provide a list to show only those formats, or provide an empty list to disable export.
+- Improved compact date/time picker button sizing in constrained editor layouts.
+
 ## 1.0.6
 
 - Changed column reordering to swap columns live while dragging over valid targets, with animated transitions and guarded repeat swaps for stable visual feedback.

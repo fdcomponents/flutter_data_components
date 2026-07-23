@@ -284,11 +284,7 @@ class FdcGridExportButton extends FdcGridItem {
     super.id,
     super.visible = false,
     super.placement = FdcGridItemPlacement.start,
-    this.formats = const <FdcExportFormat>[
-      FdcExportFormat.csv,
-      FdcExportFormat.json,
-      FdcExportFormat.xml,
-    ],
+    this.formats,
     this.scope = FdcExportScope.currentView,
     this.valueMode = FdcExportValueMode.raw,
     this.columnMode = FdcGridExportColumnMode.visibleColumns,
@@ -304,18 +300,19 @@ class FdcGridExportButton extends FdcGridItem {
   static const defaultTooltip = 'Export';
 
   /// Formats shown in the built-in export menu.
-  final List<FdcExportFormat> formats;
+  ///
+  /// When `null`, every format currently registered in [FdcExportRegistry] is
+  /// shown. A non-null list restricts the menu to exactly those formats. An
+  /// empty list disables the export item.
+  final List<FdcExportFormat>? formats;
 
-  /// Effective formats including formats registered by extension packages.
-  List<FdcExportFormat> get effectiveFormats {
-    final result = <FdcExportFormat>[...formats];
-    for (final format in FdcExportRegistry.formats) {
-      if (!result.contains(format)) {
-        result.add(format);
-      }
-    }
-    return List<FdcExportFormat>.unmodifiable(result);
-  }
+  /// Effective formats shown by the built-in export menu.
+  List<FdcExportFormat> get effectiveFormats =>
+      List<FdcExportFormat>.unmodifiable(
+        formats == null
+            ? FdcExportRegistry.formats
+            : <FdcExportFormat>{...formats!},
+      );
 
   /// Dataset row scope exported by the built-in grid command.
   final FdcExportScope scope;
@@ -390,7 +387,7 @@ class FdcGridExportButton extends FdcGridItem {
     id,
     visible,
     placement,
-    Object.hashAll(formats),
+    formats == null ? null : Object.hashAll(formats!),
     scope,
     valueMode,
     columnMode,

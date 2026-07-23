@@ -125,16 +125,24 @@ class FdcGridHeaderMainMenuEntries {
       hasUnpinAllColumnsAction ||
       hasResetLayoutAction;
 
-  List<FdcMenuEntry> build({bool includeFilterVisibilityToggle = true}) {
+  List<FdcMenuEntry> build({
+    bool includeFilterVisibilityToggle = true,
+    bool includeSortActions = true,
+    bool includeUnpinAllColumnsAction = true,
+  }) {
     final entries = <FdcMenuEntry>[];
 
-    _addClearSorts(entries);
+    if (includeSortActions) {
+      _addClearSorts(entries);
+    }
     _addRowSelectionFilterSubMenu(entries);
     if (includeFilterVisibilityToggle) {
       _addFilterVisibilityToggle(entries);
     }
     _addClearFilters(entries);
-    _addUnpinAllColumns(entries);
+    if (includeUnpinAllColumnsAction) {
+      _addUnpinAllColumns(entries);
+    }
     _addResetLayout(entries);
 
     return entries;
@@ -358,12 +366,22 @@ class FdcGridHeaderColumnMenuEntries {
       column.filterEnabled &&
       runtimeColumnId != null &&
       callbacks.canToggleColumnFilters();
-  bool get hasMainMenuActions =>
-      includeMainMenuEntries &&
-      FdcGridHeaderMainMenuEntries(
-        callbacks,
-        translations: translations,
-      ).hasActions;
+  bool get hasMainMenuActions {
+    if (!includeMainMenuEntries) {
+      return false;
+    }
+
+    final mainMenuEntries = FdcGridHeaderMainMenuEntries(
+      callbacks,
+      translations: translations,
+    );
+    return mainMenuEntries.hasColumnFilterActions ||
+        mainMenuEntries.hasSelectionFilterActions ||
+        mainMenuEntries.hasClearFilterAction ||
+        mainMenuEntries.hasResetLayoutAction ||
+        (mainMenuEntries.hasSortActions && !hasColumnSortActions) ||
+        (mainMenuEntries.hasUnpinAllColumnsAction && !hasColumnPinActions);
+  }
 
   bool get hasColumnActions =>
       hasColumnSortActions || hasFilterActions || hasColumnPinActions;
@@ -373,9 +391,20 @@ class FdcGridHeaderColumnMenuEntries {
   List<FdcMenuEntry> build() {
     final state = _menuState;
     final entries = <FdcMenuEntry>[];
+    final columnActionGroupCount = <bool>[
+      hasColumnSortActions,
+      hasFilterActions,
+      hasColumnPinActions,
+    ].where((available) => available).length;
 
     if (hasColumnSortActions) {
-      _addSortSubMenu(entries, state);
+      if (columnActionGroupCount == 1) {
+        _addSortEntries(entries, state);
+        _addClearColumnSortEntry(entries, state);
+        _addClearAllSortsEntry(entries, state);
+      } else {
+        _addSortSubMenu(entries, state);
+      }
     }
 
     if (hasFilterActions) {
@@ -383,7 +412,12 @@ class FdcGridHeaderColumnMenuEntries {
     }
 
     if (hasColumnPinActions) {
-      _addPinSubMenu(entries, state);
+      if (columnActionGroupCount == 1) {
+        _addPinEntries(entries, state);
+        _addUnpinAllColumnsEntry(entries);
+      } else {
+        _addPinSubMenu(entries, state);
+      }
     }
 
     _addMainMenuEntries(entries);
@@ -436,10 +470,15 @@ class FdcGridHeaderColumnMenuEntries {
       return;
     }
 
-    final mainMenuEntries = FdcGridHeaderMainMenuEntries(
-      callbacks,
-      translations: translations,
-    ).build(includeFilterVisibilityToggle: false);
+    final mainMenuEntries =
+        FdcGridHeaderMainMenuEntries(
+          callbacks,
+          translations: translations,
+        ).build(
+          includeFilterVisibilityToggle: false,
+          includeSortActions: !hasColumnSortActions,
+          includeUnpinAllColumnsAction: !hasColumnPinActions,
+        );
 
     if (mainMenuEntries.isEmpty) {
       return;
@@ -584,6 +623,7 @@ class FdcGridHeaderColumnMenuEntries {
 
     final pinEntries = <FdcMenuEntry>[];
     _addPinEntries(pinEntries, state);
+    _addUnpinAllColumnsEntry(pinEntries);
     if (pinEntries.isEmpty) {
       return;
     }
@@ -643,6 +683,20 @@ class FdcGridHeaderColumnMenuEntries {
         icon: Icons.close,
         onPressed: () =>
             callbacks.onSetHeaderColumnPin(columnIndex, FdcGridColumnPin.none),
+      ),
+    );
+  }
+
+  void _addUnpinAllColumnsEntry(List<FdcMenuEntry> entries) {
+    if (!callbacks.hasUserPinnedColumns()) {
+      return;
+    }
+
+    entries.add(
+      FdcMenuAction(
+        text: translations.grid.unpinAllColumns,
+        icon: Icons.push_pin_outlined,
+        onPressed: callbacks.onUnpinAllUserColumns,
       ),
     );
   }

@@ -92,6 +92,79 @@ void _registerColumnMenuLayoutTests() {
     );
 
     testWidgets(
+      'column header menu exposes sorting actions directly when sorting is the only group',
+      (tester) async {
+        final dataSet = FdcDataSet(
+          fields: const <FdcFieldDef>[
+            FdcStringField(size: 255, name: 'name'),
+            FdcStringField(size: 255, name: 'city'),
+          ],
+          adapter: FdcMemoryDataAdapter(
+            rows: const <Map<String, Object?>>[
+              {'name': 'Beta', 'city': 'Boston'},
+              {'name': 'Alpha', 'city': 'Oslo'},
+            ],
+          ),
+        );
+        dataSet.open();
+
+        await uxPumpGrid(
+          tester,
+          dataSet: dataSet,
+          pinning: const FdcGridColumnPinning(),
+          header: const FdcGridHeader(height: 32),
+          columns: const <FdcGridColumn<dynamic>>[
+            FdcTextColumn<dynamic>(fieldName: 'name', label: 'Name'),
+            FdcTextColumn<dynamic>(
+              fieldName: 'city',
+              label: 'City',
+              allowSort: false,
+            ),
+          ],
+        );
+
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await uxPumpPendingFrames(tester);
+
+        expect(find.text('Sorting'), findsNothing);
+        expect(find.text('Sort ascending'), findsOneWidget);
+        expect(find.text('Sort descending'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'column header menu exposes pinning actions directly when pinning is the only group',
+      (tester) async {
+        final dataSet = FdcDataSet(
+          fields: const <FdcFieldDef>[FdcStringField(size: 255, name: 'name')],
+          adapter: FdcMemoryDataAdapter(
+            rows: const <Map<String, Object?>>[
+              {'name': 'Alpha'},
+            ],
+          ),
+        );
+        dataSet.open();
+
+        await uxPumpGrid(
+          tester,
+          dataSet: dataSet,
+          options: const FdcGridOptions(),
+          header: const FdcGridHeader(height: 32),
+          columns: const <FdcGridColumn<dynamic>>[
+            FdcTextColumn<dynamic>(fieldName: 'name', label: 'Name'),
+          ],
+        );
+
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await uxPumpPendingFrames(tester);
+
+        expect(find.text('Column pinning'), findsNothing);
+        expect(find.text('Pin to left'), findsOneWidget);
+        expect(find.text('Pin to right'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'column header menu applies ascending descending and clear sort',
       (tester) async {
         final dataSet = FdcDataSet(
@@ -403,9 +476,17 @@ void _registerColumnMenuLayoutTests() {
         await tester.tap(find.byIcon(Icons.more_vert).first);
         await uxPumpPendingFrames(tester);
         expect(find.text('Hide filters'), findsOneWidget);
-        expect(find.text('Unpin all columns'), findsOneWidget);
+        expect(find.text('Column pinning'), findsOneWidget);
         expect(find.text('Reset grid layout'), findsOneWidget);
 
+        await tester.tap(find.text('Column pinning'));
+        await uxPumpPendingFrames(tester);
+        expect(find.text('Unpin all columns'), findsOneWidget);
+
+        await tester.tapAt(const Offset(1, 1));
+        await uxPumpPendingFrames(tester);
+        await tester.tap(find.byIcon(Icons.more_vert).first);
+        await uxPumpPendingFrames(tester);
         await tester.tap(find.text('Reset grid layout'));
         await uxPumpPendingFrames(tester);
 

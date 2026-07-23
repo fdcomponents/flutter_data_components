@@ -2,24 +2,20 @@
 
 [![pub package](https://img.shields.io/pub/v/flutter_data_components.svg)](https://pub.dev/packages/flutter_data_components)
 [![pub points](https://img.shields.io/pub/points/flutter_data_components)](https://pub.dev/packages/flutter_data_components/score)
-[![likes](https://img.shields.io/pub/likes/flutter_data_components)](https://pub.dev/packages/flutter_data_components/score)
 [![CI](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci.yml)
 [![CI macOS](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci-macos.yml/badge.svg)](https://github.com/fdcomponents/flutter_data_components/actions/workflows/ci-macos.yml)
 [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
-**High-performance RAD data components for Flutter business applications.**
+**A high-performance Flutter data grid and RAD toolkit for CRUD business applications.**
 
-**[Website](https://fdcomponents.com) · [Documentation](https://fdcomponents.com/docs/intro/) · [API reference](https://pub.dev/documentation/flutter_data_components/latest/)**
+**[Website](https://fdcomponents.com) · [Documentation](https://fdcomponents.com/docs/intro/) · [Showcase](https://fdcomponents.com/showcase)**
 
-Build data-heavy Flutter applications faster with a cohesive toolkit for datasets, typed fields, validation, CRUD workflows, data-aware editors, and an editable enterprise grid.
+Flutter Data Components provides an editable, virtualized data grid, CRUD datasets, typed fields, validation, data-aware form editors, filtering, sorting, search, paging, summaries, and export in one consistent programming model.
 
-FDC is designed for the screens that dominate real business software: POS systems, orders, invoices, inventory, administration, back-office operations, ERP modules, and other structured data workflows.
+Use it to build data-heavy Flutter applications such as admin panels, ERP and CRM modules, inventory systems, order and invoice screens, POS software, back-office tools, and other structured business workflows across mobile, desktop, and web.
 
-```dart
-import 'package:flutter_data_components/fdc.dart';
-```
 
-## Build CRUD screens around data, not widget plumbing
+## Flutter CRUD components built around a dataset
 
 Most business screens repeat the same concerns: schema, validation, edit state, formatting, navigation, filtering, sorting, search, error handling, and persistence.
 
@@ -27,15 +23,17 @@ FDC brings those concerns together in one metadata-driven model.
 
 Define your fields once. Bind a grid or editors to the dataset. Let the same field metadata drive validation, formatting, filtering, editing, and display behavior across the UI.
 
-**What you get:**
+### What the package includes
 
-- a dataset lifecycle built for CRUD: browse, append, edit, post, cancel, delete;
-- typed field metadata with validation, defaults, keys, precision, scale, and storage rules;
-- an editable, virtualized data grid with sorting, filtering, search, summaries, selection, toolbars, and status UI;
-- data-aware editors that bind directly to dataset fields;
-- local and adapter-backed data flows through the same dataset API;
+Flutter Data Components combines the core building blocks needed for structured, data-driven Flutter applications:
+
+- `FdcDataSet`, with record navigation and a complete CRUD lifecycle for browse, append, edit, post, cancel, and delete operations;
+- typed field definitions for validation, defaults, keys, precision, scale, calculated values, and storage rules;
+- an editable, virtualized data grid with sorting, filtering, search, summaries, selection, paging, toolbars, and status information;
+- data-aware form editors that bind directly to dataset fields and share the same validation and edit state;
+- a consistent API for local data and adapter-backed data sources;
 - cached updates and change tracking for controlled persistence workflows;
-- shared formatting, localization, theming, and focus behavior;
+- shared formatting, localization, theming, keyboard, and focus behavior;
 - JSON, CSV, and XML export support.
 
 ## See the model in one minute
@@ -163,9 +161,9 @@ Available dataset field types include strings, integers, decimals, booleans, dat
 
 The result is one schema source for datasets, grids, editors, exporters, and adapters.
 
-## Enterprise grid without rebuilding the data layer
+## Editable Flutter data grid for business applications
 
-`FdcGrid` is a dataset-aware editable grid for dense business workflows.
+`FdcGrid` is a dataset-aware Flutter data grid and data table component for dense business workflows.
 
 It includes:
 
@@ -184,7 +182,7 @@ It includes:
 
 The grid does not create a parallel data model. It operates directly on `FdcDataSet`, so navigation, validation, edits, filters, and state remain coordinated.
 
-## Data-aware editors
+## Data-aware Flutter form editors
 
 Build forms with editors bound directly to dataset fields:
 
@@ -209,7 +207,7 @@ Column(
 
 Editors share the dataset lifecycle and field metadata with the grid. A validation rule defined on the field stays the same whether the value is edited in a form or directly in a grid cell.
 
-## Local data or adapters — same UI model
+## Local, paged, and adapter-backed data
 
 For local application data, load rows directly into an adapter-less dataset:
 
@@ -239,7 +237,7 @@ FDC can track inserted, updated, and deleted records as a change set. This suppo
 
 The dataset keeps editing semantics separate from persistence transport, making it suitable for transactional business workflows and APIs that accept batched changes.
 
-## Search, filters, sorts, and aggregates
+## Data grid search, filtering, sorting, and aggregates
 
 FDC provides first-class dataset operations instead of forcing every screen to invent its own query state.
 
@@ -289,19 +287,13 @@ Built-in UI translations include English, Croatian, Italian, German, French, and
 
 `FdcExporter` can export datasets to JSON, CSV, and XML. Grid export integration can use the visible grid column configuration, so exported data follows the user-facing table layout by default.
 
-## Why FDC?
+## Built for structured business data
 
-Flutter is excellent for building interfaces. Business applications, however, also need a disciplined data-editing model.
+Flutter Data Components provides a unified foundation for screens that combine data loading, navigation, editing, validation, filtering, sorting, and persistence.
 
-FDC fills that gap with a component architecture centered on four principles:
+The dataset acts as the shared data contract for grids, editors, adapters, and exporters. Field metadata defines validation, formatting, storage rules, and display behavior once, while the explicit browse, append, edit, post, cancel, and delete lifecycle keeps business state predictable.
 
-**RAD productivity.** Common CRUD mechanics should be reusable infrastructure, not screen-by-screen boilerplate.
-
-**One data contract.** Schema, validation, editing, display, filtering, and persistence metadata should not drift apart.
-
-**Explicit state.** Browse, edit, insert, post, cancel, delete, loading, and error states should be observable and predictable.
-
-**Architecture freedom.** FDC is not a backend, router, dependency-injection framework, or application state-management solution. Use it with the architecture that fits your application.
+This approach reduces repeated CRUD infrastructure while remaining independent of the backend, routing, dependency injection, and application state-management architecture.
 
 ## Installation
 
@@ -309,32 +301,6 @@ Add the package to your Flutter application:
 
 ```bash
 flutter pub add flutter_data_components
-```
-
-Then import the Community API:
-
-```dart
-import 'package:flutter_data_components/fdc.dart';
-```
-
-## Example application
-
-The package includes a complete customer-management example demonstrating:
-
-- typed dataset schema;
-- adapter-backed data;
-- inline CRUD operations;
-- validation;
-- search and filters;
-- summaries;
-- combo columns;
-- theme switching;
-- runtime language switching.
-
-Run it from the package example directory with:
-
-```bash
-flutter run
 ```
 
 ## Community and Pro
@@ -349,7 +315,7 @@ Community applications use the same core programming model, so the architecture 
 
 - Website: https://fdcomponents.com
 - Documentation: https://fdcomponents.com/docs/intro/
-- API reference: https://pub.dev/documentation/flutter_data_components/latest/
+- Showcase: https://fdcomponents.com/showcase
 - Source code: https://github.com/fdcomponents/flutter_data_components
 - Issues: https://github.com/fdcomponents/flutter_data_components/issues
 
