@@ -271,7 +271,7 @@ class _CustomersPageState extends State<_CustomersPage> {
                         tooltip: 'Delete the current customer',
                         onPressed:
                             _customers.state == FdcDataSetState.browse &&
-                                !_customers.isEmpty
+                                _customers.isNotEmpty
                             ? () => unawaited(_deleteCustomer())
                             : null,
                       ),

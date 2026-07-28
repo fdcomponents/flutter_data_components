@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Added `FdcDataSet.isEmpty` and `FdcDataSet.isNotEmpty` convenience getters for checking the current dataset view without comparing `recordCount`.
+
 ## 1.0.7
 
 - Kept clear-all sorting and unpin-all columns within their respective Sorting and Pinning groups when building smart column menus.

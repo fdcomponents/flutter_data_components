@@ -35,6 +35,16 @@ class FdcGridToolbarSearchController {
     return true;
   }
 
+  bool setText(String text, {bool submit = true}) {
+    final state = _state;
+    if (state == null) {
+      return false;
+    }
+
+    state.setText(text, submit: submit);
+    return true;
+  }
+
   bool clearSilently({bool collapse = true}) {
     final state = _state;
     if (state == null) {
@@ -529,6 +539,24 @@ class FdcGridToolbarSearchState extends State<FdcGridToolbarSearch>
       }
       _focusNode.requestFocus();
     });
+  }
+
+  void setText(String text, {bool submit = true}) {
+    if (!widget.enabled) {
+      return;
+    }
+
+    if (!_expanded || !_showExpandedField) {
+      _expandSearchField();
+    }
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    if (submit) {
+      _debounce.cancel();
+      _submitSearchChange(text, force: true);
+    }
   }
 
   void _clear() {

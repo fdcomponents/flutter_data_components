@@ -1321,8 +1321,11 @@ class FdcDataSet extends ChangeNotifier {
   bool get isOpen => _state != FdcDataSetState.closed;
   bool get _canApplyViewOperation => _state != FdcDataSetState.closed;
 
-  /// Whether this object contains no items.
+  /// Whether the current dataset view contains no records.
   bool get isEmpty => recordCount == 0;
+
+  /// Whether the current dataset view contains one or more records.
+  bool get isNotEmpty => recordCount != 0;
 
   /// True when the dataset cursor is positioned on the first visible record.
   /// Empty datasets are both BOF and EOF.

@@ -1,6 +1,6 @@
 name: flutter_data_components
 description: High-performance Flutter data grid and RAD toolkit for CRUD apps, with datasets, typed fields, validation, editors, filtering, sorting, paging, and export.
-version: 1.0.7
+version: 1.0.8
 homepage: https://fdcomponents.com
 documentation: https://fdcomponents.com/docs/intro/
 repository: https://github.com/fdcomponents/flutter_data_components
