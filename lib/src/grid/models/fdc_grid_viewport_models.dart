@@ -72,6 +72,7 @@ class FdcGridViewportModel {
     required this.draggingColumnIndex,
     required this.hasActiveCellEditor,
     required this.recordScroll,
+    required this.usesInfinitePaging,
     required this.bodyKey,
     required this.selectedRangeBounds,
     required this.rangeOutlineStyle,
@@ -190,6 +191,7 @@ class FdcGridViewportModel {
   ScrollController get verticalScrollController =>
       scrollCoordinator.verticalFlutterController;
   final bool recordScroll;
+  final bool usesInfinitePaging;
   final GlobalKey bodyKey;
   final ({
     int firstRow,

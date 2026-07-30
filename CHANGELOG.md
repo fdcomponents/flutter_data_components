@@ -1,3 +1,7 @@
+## 1.0.9
+
+- Improved the infinite paging experience for smoother, more stable scrolling as additional pages are loaded.
+
 ## 1.0.8
 
 - Added `FdcDataSet.isEmpty` and `FdcDataSet.isNotEmpty` convenience getters for checking the current dataset view without comparing `recordCount`.

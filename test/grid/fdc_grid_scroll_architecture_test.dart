@@ -32,6 +32,33 @@ FdcDataSet _scrollDataSet() {
   return dataSet;
 }
 
+FdcDataSet _infiniteScrollDataSet() {
+  return FdcDataSet(
+    fields: const <FdcFieldDef>[
+      FdcStringField(size: 255, name: 'left'),
+      FdcStringField(size: 255, name: 'centerA'),
+      FdcStringField(size: 255, name: 'centerB'),
+      FdcStringField(size: 255, name: 'right'),
+    ],
+    adapter: FdcMemoryDataAdapter(
+      rows: <Map<String, Object?>>[
+        for (var i = 0; i < 40; i++)
+          <String, Object?>{
+            'left': 'Left ${i.toString().padLeft(2, '0')}',
+            'centerA': 'Center A ${i.toString().padLeft(2, '0')}',
+            'centerB': 'Center B ${i.toString().padLeft(2, '0')}',
+            'right': 'Right ${i.toString().padLeft(2, '0')}',
+          },
+      ],
+    ),
+    paging: const FdcDataPagingOptions(
+      enabled: true,
+      pageSize: 20,
+      mode: FdcDataPagingMode.infinite,
+    ),
+  );
+}
+
 double _scrollableOffset(WidgetTester tester, Axis axis) {
   final scrollables = tester.widgetList<Scrollable>(find.byType(Scrollable));
   final scrollable = scrollables.singleWhere(
@@ -224,6 +251,28 @@ void main() {
                 axisDirectionToAxis(widget.axisDirection) == Axis.vertical,
           );
       expect(scrollbar.controller, verticalScrollable.controller);
+    });
+
+    testWidgets('infinite paging hides only the vertical scrollbar thumb', (
+      tester,
+    ) async {
+      final dataSet = _infiniteScrollDataSet();
+      await dataSet.paging.openPage(0);
+
+      await tester.pumpWidget(_scrollGridHost(dataSet: dataSet));
+      await pumpPendingFrames(tester);
+
+      expect(find.byType(Scrollbar), findsOneWidget);
+      expect(find.byType(Scrollable), findsNWidgets(2));
+
+      final scrollbar = tester.widget<Scrollbar>(find.byType(Scrollbar));
+      final horizontalScrollable = tester
+          .widgetList<Scrollable>(find.byType(Scrollable))
+          .singleWhere(
+            (widget) =>
+                axisDirectionToAxis(widget.axisDirection) == Axis.horizontal,
+          );
+      expect(scrollbar.controller, horizontalScrollable.controller);
     });
 
     testWidgets('scrollbars can hide both thumbs without disabling scrolling', (

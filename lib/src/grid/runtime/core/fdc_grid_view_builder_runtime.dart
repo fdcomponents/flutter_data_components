@@ -104,6 +104,7 @@ extension _FdcGridStateViewBuilders on _FdcGridState {
         recordScroll:
             widget.options.verticalScrollMode ==
             FdcGridVerticalScrollMode.recordScroll,
+        usesInfinitePaging: widget.dataSet.paging.isInfinite,
         bodyKey: _runtime.domains.core.bodyViewportKey,
         selectedRangeBounds: _selectedRangeOverlayBounds(),
         rangeSelectionModifierActive: _rangeSelectionModifierActive,

@@ -736,7 +736,9 @@ class FdcGridSplitViewport extends StatelessWidget {
               SizedBox(
                 height: bodyHeight,
                 child: FdcGridOptionalScrollbar(
-                  visible: model.options.showVerticalScrollbar,
+                  visible:
+                      model.options.showVerticalScrollbar &&
+                      !model.usesInfinitePaging,
                   controller: model.verticalScrollController,
                   notificationPredicate: (notification) {
                     // The vertical ListView lives below the center horizontal
