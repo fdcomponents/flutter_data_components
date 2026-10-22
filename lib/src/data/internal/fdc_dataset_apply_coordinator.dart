@@ -210,7 +210,7 @@ final class FdcDataSetApplyCoordinator {
       if (!_isLifecycleCurrent(lifecycleGeneration)) {
         return result;
       }
-      return _completeApplyResult(changes, result, previousState);
+      return await _completeApplyResult(changes, result, previousState);
     } on Object catch (error, stackTrace) {
       return _completeApplyException(
         changes,

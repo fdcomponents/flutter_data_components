@@ -1,3 +1,8 @@
+## 1.0.10
+
+- Fixed asynchronous adapter-apply completion so errors from the completion Future are handled by the dataset apply error path.
+- Kept analyzer settings compatible with supported SDK diagnostics; existing discarded-Future checks remain enabled.
+
 ## 1.0.9
 
 - Improved the infinite paging experience for smoother, more stable scrolling as additional pages are loaded.

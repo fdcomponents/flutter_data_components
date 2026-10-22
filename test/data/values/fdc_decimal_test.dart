@@ -74,4 +74,97 @@ void main() {
       expect(result.toString(), '0.01524157875323883675019051998750190521');
     },
   );
+
+  group('roundTo', () {
+    test('uses half away from zero by default', () {
+      expect('1.225'.decimal.roundTo(2).toString(), '1.23');
+      expect('-1.225'.decimal.roundTo(2).toString(), '-1.23');
+    });
+
+    test('supports half even midpoint rounding', () {
+      expect(
+        '1.225'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.22',
+      );
+      expect(
+        '1.235'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.24',
+      );
+      expect(
+        '1.245'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.24',
+      );
+      expect(
+        '1.255'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.26',
+      );
+    });
+
+    test('supports half even rounding for negative values', () {
+      expect(
+        '-2.5'.decimal.roundTo(0, mode: FdcRoundingMode.halfEven).toString(),
+        '-2',
+      );
+      expect(
+        '-3.5'.decimal.roundTo(0, mode: FdcRoundingMode.halfEven).toString(),
+        '-4',
+      );
+    });
+
+    test('distinguishes exact midpoint from nearby values', () {
+      expect(
+        '1.2249'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.22',
+      );
+      expect(
+        '1.2251'.decimal.roundTo(2, mode: FdcRoundingMode.halfEven).toString(),
+        '1.23',
+      );
+    });
+
+    test('supports explicit half up rounding', () {
+      expect('1.225'.decimal.roundTo(2).toString(), '1.23');
+      expect('-1.225'.decimal.roundTo(2).toString(), '-1.23');
+      expect('1.224'.decimal.roundTo(2).toString(), '1.22');
+    });
+
+    test('supports half down midpoint rounding', () {
+      expect(
+        '1.225'.decimal.roundTo(2, mode: FdcRoundingMode.halfDown).toString(),
+        '1.22',
+      );
+      expect(
+        '-1.225'.decimal.roundTo(2, mode: FdcRoundingMode.halfDown).toString(),
+        '-1.22',
+      );
+      expect(
+        '1.2251'.decimal.roundTo(2, mode: FdcRoundingMode.halfDown).toString(),
+        '1.23',
+      );
+      expect(
+        '-1.2251'.decimal.roundTo(2, mode: FdcRoundingMode.halfDown).toString(),
+        '-1.23',
+      );
+    });
+
+    test('increases scale without changing the value', () {
+      final rounded = '1.2'.decimal.roundTo(4, mode: FdcRoundingMode.halfEven);
+
+      expect(rounded.toString(), '1.2000');
+      expect(rounded.scale, 4);
+    });
+
+    test('returns the same instance when scale is unchanged', () {
+      final value = '1.20'.decimal;
+
+      expect(identical(value.roundTo(2), value), isTrue);
+    });
+
+    test('rejects target scale outside supported range', () {
+      final value = '1.2'.decimal;
+
+      expect(() => value.roundTo(-1), throwsRangeError);
+      expect(() => value.roundTo(39), throwsRangeError);
+    });
+  });
 }

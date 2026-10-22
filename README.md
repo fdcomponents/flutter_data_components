@@ -10,6 +10,8 @@
 
 **[Website](https://fdcomponents.com) · [Documentation](https://fdcomponents.com/docs/intro/) · [Showcase](https://fdcomponents.com/showcase)**
 
+**Community 1.0.10** is a maintenance release that improves error handling during asynchronous dataset updates and strengthens static analysis. No public API changes are required. See the [changelog](CHANGELOG.md) for details.
+
 Flutter Data Components provides an editable, virtualized data grid, CRUD datasets, typed fields, validation, data-aware form editors, filtering, sorting, search, paging, summaries, and export in one consistent programming model.
 
 Use it to build data-heavy Flutter applications such as admin panels, ERP and CRM modules, inventory systems, order and invoice screens, POS software, back-office tools, and other structured business workflows across mobile, desktop, and web.

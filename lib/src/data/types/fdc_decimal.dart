@@ -4,6 +4,18 @@
 
 import '../../common/format/fdc_decimal_math.dart';
 
+/// Rounding strategy used by [FdcDecimal.roundTo].
+enum FdcRoundingMode {
+  /// Rounds to the nearest value, with exact midpoints rounded away from zero.
+  halfUp,
+
+  /// Rounds to the nearest value, with exact midpoints rounded toward zero.
+  halfDown,
+
+  /// Rounds exact midpoint values to the nearest even retained digit.
+  halfEven,
+}
+
 /// Fixed-scale decimal value used by decimal field runtime values.
 ///
 /// The value is stored as an integer scaled by [scale], so decimal input does
@@ -353,6 +365,30 @@ class FdcDecimal implements Comparable<FdcDecimal> {
   /// Rounds to the nearest integer value.
   int round() => _roundToInteger().toInt();
 
+  /// Returns this value rounded to [targetScale] decimal places.
+  ///
+  /// Increasing the scale preserves the exact value and appends zeroes. When
+  /// reducing the scale, [mode] controls how midpoint values are rounded.
+  FdcDecimal roundTo(
+    int targetScale, {
+    FdcRoundingMode mode = FdcRoundingMode.halfUp,
+  }) {
+    RangeError.checkValueInInterval(targetScale, 0, 38, 'targetScale');
+    if (targetScale == scale) {
+      return this;
+    }
+
+    return FdcDecimal.fromScaled(
+      _rescaleRoundedWithMode(
+        scaledValue,
+        fromScale: scale,
+        toScale: targetScale,
+        mode: mode,
+      ),
+      scale: targetScale,
+    );
+  }
+
   /// Returns the greatest integer value not greater than this value.
   int floor() => _floorToInteger().toInt();
 
@@ -578,6 +614,20 @@ class FdcDecimal implements Comparable<FdcDecimal> {
     required int fromScale,
     required int toScale,
   }) {
+    return _rescaleRoundedWithMode(
+      value,
+      fromScale: fromScale,
+      toScale: toScale,
+      mode: FdcRoundingMode.halfUp,
+    );
+  }
+
+  static BigInt _rescaleRoundedWithMode(
+    BigInt value, {
+    required int fromScale,
+    required int toScale,
+    required FdcRoundingMode mode,
+  }) {
     if (toScale >= fromScale) {
       return _rescaleExact(value, fromScale: fromScale, toScale: toScale);
     }
@@ -587,7 +637,13 @@ class FdcDecimal implements Comparable<FdcDecimal> {
     final abs = value.abs();
     final quotient = abs ~/ divisor;
     final remainder = abs % divisor;
-    final shouldRound = remainder * BigInt.from(2) >= divisor;
+    final midpointComparison = (remainder * BigInt.from(2)).compareTo(divisor);
+    final shouldRound = switch (mode) {
+      FdcRoundingMode.halfUp => midpointComparison >= 0,
+      FdcRoundingMode.halfDown => midpointComparison > 0,
+      FdcRoundingMode.halfEven =>
+        midpointComparison > 0 || (midpointComparison == 0 && quotient.isOdd),
+    };
     final rounded = shouldRound ? quotient + BigInt.one : quotient;
     return negative ? -rounded : rounded;
   }
