@@ -46,8 +46,7 @@ void _viewControllerPrunesRetainedIdsThatNoLongerExist() {
   expect(
     view.retainedVisibleRecordIds,
     <int>{first.id},
-    reason:
-        'The second prune must retain only the record still present in the view.',
+    reason: 'Only the existing record should remain.',
   );
 }
 
