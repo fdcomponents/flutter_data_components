@@ -32,22 +32,16 @@ void _viewControllerPrunesRetainedIdsThatNoLongerExist() {
   ]);
 
   expect(removedFirstPass, 1);
-  expect(
-    view.retainedVisibleRecordIds,
-    <int>{first.id, second.id},
-    reason: 'The first prune must remove only the stale retained record id.',
-  );
+  final expectedRetainedIds = <int>{first.id, second.id};
+  expect(view.retainedVisibleRecordIds, expectedRetainedIds);
 
   final removedSecondPass = view.pruneRetainedVisibleRecords(<FdcRecord>[
     first,
   ]);
 
   expect(removedSecondPass, 1);
-  expect(
-    view.retainedVisibleRecordIds,
-    <int>{first.id},
-    reason: 'Only the existing record should remain.',
-  );
+  final expectedRemainingIds = <int>{first.id};
+  expect(view.retainedVisibleRecordIds, expectedRemainingIds);
 }
 
 Future<void> _deletedRetainedInsertedRecordDoesNotSurviveSortRefresh() async {

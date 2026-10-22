@@ -52,24 +52,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
-        
-      - name: Diagnose Dart formatting
-        run: |
-          cp test/data/fdc_dataset_retained_visible_prune_test.dart /tmp/fdc_before.dart
-          
-          dart format test/data/fdc_dataset_retained_visible_prune_test.dart
 
-          echo "=== EXACT FORMAT DIFFERENCE ==="
-          diff -u /tmp/fdc_before.dart test/data/fdc_dataset_retained_visible_prune_test.dart || true
-
-          echo "=== GIT STATUS ==="
-          git status --short
-
-      - name: Check Dart formatting
-        run: |
-          dart format lib test
-          git diff -- test/data/fdc_dataset_retained_visible_prune_test.dart
-          git diff --exit-code -- lib test
+      - name: Check formatting
+        run: dart format --set-exit-if-changed lib test
 
       - name: Analyze
         run: flutter analyze lib test
