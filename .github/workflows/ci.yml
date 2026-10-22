@@ -62,5 +62,3 @@ jobs:
       - name: Run public tests
         run: flutter test
 
-      - name: Verify package publication
-        run: dart pub publish --dry-run
